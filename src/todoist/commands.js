@@ -74,7 +74,12 @@ const commands = [
 
         await ctx.api.closeTask(resolved.id);
         ctx.knownTasks = ctx.knownTasks.filter((t) => t.id !== resolved.id);
-        return { type: 'message', tone: 'success', text: `Completed: ${resolved.label}` };
+        return {
+          type: 'message',
+          tone: 'success',
+          text: `Completed: ${resolved.label}`,
+          checkedKey: resolved.id, // ticks this task's rows on screen
+        };
       }),
   },
 ];
@@ -204,6 +209,7 @@ const PRIORITY_MARKS = { 4: '!!!', 3: '!!', 2: '!', 1: '' };
  */
 export function toListItem(task, now = new Date()) {
   const item = {
+    key: task.id,
     text: task.content,
     mark: PRIORITY_MARKS[task.priority] ?? '',
     checkCommand: `td task complete id:${task.id}`,

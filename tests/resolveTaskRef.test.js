@@ -81,7 +81,12 @@ describe('td task complete', () => {
     const ctx = { api: mockApi(), knownTasks: [...TASKS] };
     const result = await run('td task complete "call the dentist"', ctx);
     expect(ctx.api.closeTask).toHaveBeenCalledWith('c3');
-    expect(result).toEqual({ type: 'message', tone: 'success', text: 'Completed: Call the dentist' });
+    expect(result).toEqual({
+      type: 'message',
+      tone: 'success',
+      text: 'Completed: Call the dentist',
+      checkedKey: 'c3',
+    });
     expect(ctx.knownTasks.find((t) => t.id === 'c3')).toBeUndefined();
   });
 

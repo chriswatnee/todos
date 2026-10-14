@@ -5,13 +5,15 @@
  * One row in an item list.
  * @typedef {Object} ListItem
  * @property {string} text            main text (untrusted, rendered as text only)
+ * @property {string} [key]           stable identity (e.g. a task id); a result's
+ *   `checkedKey` ticks every row on screen with this key
  * @property {string} [detail]        secondary text, e.g. a due date
  * @property {string} [detailWarning] if set, the detail is shown in the warning color,
  *   and this text (e.g. "overdue") is added for screen readers only
  * @property {string} [mark]          short marker, e.g. "!!!" for priority
  * @property {string} [checkCommand]  if set, the row gets a "[ ]" checkbox (normal mode)
  *   that types and runs this command, e.g. "td task complete id:123". The box shows
- *   "[X]" once the command returns a success message.
+ *   "[X]" when any command's result has a matching `checkedKey`.
  * @property {string} [ref]           short reference (e.g. "id:123") shown instead of
  *                                    the checkbox in expert mode, so it can be typed
  */
@@ -20,7 +22,7 @@
  * What a command handler returns. Handlers return data, never HTML.
  * @typedef {(
  *   { type: 'itemList', title: string, items: ListItem[], emptyText: string } |
- *   { type: 'message', text: string, tone?: 'info' | 'success' | 'error' } |
+ *   { type: 'message', text: string, tone?: 'info' | 'success' | 'error', checkedKey?: string } |
  *   { type: 'lines', lines: string[] } |
  *   { type: 'clear' } |
  *   { type: 'setMode', expert: boolean } |

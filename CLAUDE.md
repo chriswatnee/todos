@@ -44,8 +44,10 @@ tests/              Vitest tests, including boundary.test.js
 - Buttons and task-row checkboxes never call handlers directly. They send a
   command string to `terminal.runFromButton()`, which types it and then calls
   the same `submit()` path as typed input. `runFromButton()` returns a promise
-  of the command's Result (or null if the click was ignored). That's how a
-  checkbox learns whether its command succeeded.
+  of the command's Result (or null if the click was ignored).
+- UI state that depends on a command's outcome is driven by the Result in
+  `terminal.apply()`, never by the button or checkbox that started it. That
+  way typed and clicked commands behave the same.
 - Only button-initiated commands animate, at 35ms per character. Typed commands
   run immediately, and output never animates.
 - Input is locked while a command types, and extra clicks are ignored. Any
@@ -108,9 +110,14 @@ Future apps on this UI reuse the same look.
     task text (`aria-labelledby`), with a yellow focus outline.
   - It shows `[ ]` while open and turns yellow on hover or while its command
     types.
-  - It shows `[X]` in cyan only after the command returns a success message.
-    The row's text then dims and is struck through, and the box becomes
-    disabled. There is no uncomplete yet. A failed command leaves it `[ ]`.
+  - Clicking only types and runs the command. Rows are ticked from the result:
+    a successful `td task complete` returns `checkedKey` (the task id), and
+    the terminal calls `markItemsChecked()` for every on-screen row whose
+    `key` matches. This works whether the command was typed by id, typed by
+    name, or clicked.
+  - A ticked row shows `[X]` in cyan, its text dims and is struck through,
+    and the box becomes disabled. There is no uncomplete yet. A failed or
+    ambiguous command ticks nothing.
   - Secondary info such as `id:` refs uses `--color-dim` (light gray). On
     phones the refs are shrunk so they don't squeeze the text column.
 - **Expert mode:** `mode expert` adds the `expert-mode` class to `#app`. CSS

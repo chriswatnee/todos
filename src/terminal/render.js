@@ -25,8 +25,8 @@ export function renderEcho(prompt, line) {
 
 /**
  * @param {Result} result
- * @param {{ onAction: (command: string, button: HTMLElement) => Promise<Result | null> }} hooks
- *   onAction types and runs a command, resolving with its result once it has run
+ * @param {{ onAction: (command: string, button: HTMLElement) => void }} hooks
+ *   onAction types and runs a command
  * @returns {HTMLElement | null}
  */
 export function renderResult(result, { onAction }) {
@@ -74,11 +74,12 @@ let nextTextId = 0;
  */
 function renderItem(item, onAction) {
   const row = el('li', 'item');
+  if (item.key) row.dataset.key = item.key;
   const textEl = el('span', 'item-text', item.text);
   textEl.id = `item-text-${++nextTextId}`;
 
   const lead = el('div', 'item-lead');
-  if (item.checkCommand) lead.append(renderCheckbox(item.checkCommand, textEl.id, row, onAction));
+  if (item.checkCommand) lead.append(renderCheckbox(item.checkCommand, textEl.id, onAction));
   if (item.ref) lead.append(el('span', 'item-ref', item.ref));
 
   // Body: optional mark, then a block with the text + detail that wraps on its
@@ -107,10 +108,11 @@ function renderDetail(item) {
 /**
  * A DOS-style "[ ]" checkbox. It's a real button with role="checkbox", so it is
  * focusable and toggled with Space/Enter, and its name is the task text.
- * Clicking types and runs `command`; only a success result ticks it ("[X]").
- * Once ticked it is inert (no uncomplete yet).
+ * Clicking only types and runs `command`. The box is ticked later, by
+ * markItemsChecked(), when a command's result says the item was checked; that
+ * way typed commands and clicks update rows the same way.
  */
-function renderCheckbox(command, labelId, row, onAction) {
+function renderCheckbox(command, labelId, onAction) {
   const box = el('button', 'checkbox item-action', '[ ]');
   box.type = 'button';
   box.setAttribute('role', 'checkbox');
@@ -118,15 +120,29 @@ function renderCheckbox(command, labelId, row, onAction) {
   box.setAttribute('aria-labelledby', labelId);
   box.title = command;
 
-  box.addEventListener('click', async () => {
+  box.addEventListener('click', () => {
     if (box.getAttribute('aria-checked') === 'true') return;
-    const result = await onAction(command, box);
-    if (result?.type === 'message' && result.tone === 'success') {
+    onAction(command, box);
+  });
+  return box;
+}
+
+/**
+ * Tick every rendered row whose item key matches: "[X]", dimmed and struck
+ * through, and inert (no uncomplete yet). Rows can repeat across listings
+ * (e.g. td today and td inbox), so all of them are updated.
+ * @param {ParentNode} root  where to look, normally the output panel
+ * @param {string} key
+ */
+export function markItemsChecked(root, key) {
+  for (const row of root.querySelectorAll('.item')) {
+    if (row.dataset.key !== key) continue; // compare as data, not via a selector
+    row.classList.add('is-done');
+    const box = row.querySelector('.checkbox');
+    if (box) {
       box.setAttribute('aria-checked', 'true');
       box.textContent = '[X]';
       box.disabled = true;
-      row.classList.add('is-done');
     }
-  });
-  return box;
+  }
 }

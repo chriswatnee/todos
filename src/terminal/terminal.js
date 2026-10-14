@@ -3,7 +3,7 @@
 
 import { dispatch } from './dispatch.js';
 import { History } from './history.js';
-import { renderEcho, renderResult } from './render.js';
+import { renderEcho, renderResult, markItemsChecked } from './render.js';
 
 /** @typedef {import('./types.js').Result} Result */
 /** @typedef {import('./types.js').ButtonDef} ButtonDef */
@@ -93,6 +93,11 @@ export function createTerminal({ elements, prompt, commandSet, builtins, ctx, bu
       return;
     }
     print(result);
+    // However the command was started (typed, button, checkbox), a result that
+    // says an item was checked ticks every row on screen for that item.
+    if (result.type === 'message' && result.checkedKey) {
+      markItemsChecked(output, result.checkedKey);
+    }
   }
 
   // One class on the app container switches everything at once (CSS does the

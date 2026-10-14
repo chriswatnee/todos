@@ -40,8 +40,9 @@ describe('toListItem dates', () => {
     expect(toListItem(task(null), NOW).detail).toBeUndefined();
   });
 
-  it('maps priority, checkbox command, and ref', () => {
+  it('maps key, priority, checkbox command, and ref', () => {
     expect(toListItem(task(null, { priority: 4 }), NOW)).toMatchObject({
+      key: 'abc',
       mark: '!!!',
       checkCommand: 'td task complete id:abc',
       ref: 'id:abc',
