@@ -20,7 +20,7 @@ const terminal = createTerminal({
     input: /** @type {HTMLInputElement} */ (document.getElementById('command-input')),
     cursor: document.getElementById('cursor'),
     prompt: document.getElementById('prompt'),
-    actions: document.getElementById('actions'),
+    app: document.getElementById('app'),
     buttonBar: document.getElementById('button-bar'),
   },
   prompt: PROMPT,

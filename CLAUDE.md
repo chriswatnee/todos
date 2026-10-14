@@ -64,6 +64,47 @@ tests/              Vitest tests, including boundary.test.js
 - Check https://developer.todoist.com/api/v1/ before adding endpoints. Don't
   guess their shapes.
 
+## Visual conventions
+Future apps on this UI reuse the same look.
+- **Palette:** all colors are CSS custom properties on `:root` in
+  `src/styles.css`, and nowhere else. The base is EGA-inspired: black `#000000`,
+  blue `#0000AA`, light gray `#AAAAAA`, dark gray `#555555`, white `#FFFFFF`,
+  light cyan `#55FFFF`, and yellow `#FFFF55`.
+- **Roles:** components use role tokens such as `--color-frame`,
+  `--color-panel`, `--color-echo`, and `--color-alert`, never raw hex values. To
+  add a color, add an EGA base token, then a role that points to it.
+- **Frame:**
+  - The page is black, with a bright cyan border around the whole app.
+  - The title bar is a gray raised bevel (white top/left, dark gray
+    bottom/right). The title is left-aligned in Press Start 2P, a bold pixel
+    font. The right side is reserved, e.g. for a username later.
+  - The output panel is blue, with a cyan border and a thin black inner gap.
+  - "CHOOSE AN ACTION:" (yellow) and the buttons sit directly on black.
+- **Text:**
+  - Body text uses VT323.
+  - Output is white. Confirmations and empty states are cyan. Errors, headings,
+    and priority marks are yellow.
+  - Echoed commands (`C:\TODO>td today`), the input prompt, typed text, and the
+    block cursor are cyan.
+- **Buttons:**
+  - Buttons are gray raised bevels. The bevel inverts when pressed, and also
+    while a button's command is typing (`.pressed`).
+  - They share the full width equally in a grid (`--button-count`, set by
+    `terminal.js`), and wrap to rows of 3, or 2 on very small screens.
+- **Task rows:**
+  - Each row has two columns, shared across the list via CSS subgrid. The left
+    column holds the small DONE button, which has the same bevel and font as the
+    action buttons. The right column holds the mark, text, and detail, wrapping
+    with a hanging indent (marks sit in a fixed 4ch slot).
+  - Secondary info such as `id:` refs uses `--color-dim` (light gray). On
+    phones the refs are shrunk so they don't squeeze the text column.
+- **Expert mode:** `mode expert` adds the `expert-mode` class to `#app`. CSS
+  then hides the button bar and the row buttons, and shows each row's `id:` ref
+  instead. Because it's one class, rows already on screen switch too.
+- **Output panel:** it scrolls, but its scrollbar is hidden in all browsers.
+  The wheel, touch, keyboard (when focused), and PageUp/PageDown from the
+  prompt all still scroll it, and new output always scrolls to the bottom.
+
 ## Security
 - Read the token only via `import.meta.env.VITE_TODOIST_TOKEN`, in
   `src/todoist/api.js`.

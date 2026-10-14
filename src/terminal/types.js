@@ -14,7 +14,9 @@
  * @property {string} text          main text (untrusted, rendered as text only)
  * @property {string} [detail]      secondary text, e.g. a due date
  * @property {string} [mark]        short marker, e.g. "!!!" for priority
- * @property {ItemAction[]} [actions]
+ * @property {ItemAction[]} [actions]  buttons, shown in normal mode
+ * @property {string} [ref]            short reference (e.g. "id:123") shown instead of
+ *                                     the buttons in expert mode, so it can be typed
  */
 
 /**

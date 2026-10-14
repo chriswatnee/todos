@@ -203,6 +203,7 @@ export function toListItem(task) {
     mark: PRIORITY_MARKS[task.priority] ?? '',
     detail: dueText(task.due),
     actions: [{ label: 'DONE', command: `td task complete id:${task.id}` }],
+    ref: `id:${task.id}`,
   };
 }
 

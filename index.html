@@ -6,16 +6,20 @@
     <title>%APP_NAME%</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <div class="app">
+    <div id="app" class="app">
       <header class="titlebar">
         <h1 class="titlebar-text">%APP_NAME%</h1>
       </header>
 
       <main class="screen">
-        <div id="output" class="output" role="log" aria-live="polite" aria-label="Output"></div>
+        <!-- tabindex lets keyboard users focus the output and scroll it with arrows/PgUp/PgDn -->
+        <div id="output" class="output" role="log" aria-live="polite" aria-label="Output" tabindex="0"></div>
 
         <div class="prompt-line">
           <span id="prompt" class="prompt" aria-hidden="true"></span>

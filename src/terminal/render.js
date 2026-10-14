@@ -64,21 +64,29 @@ function renderItemList(result, onAction) {
   return block;
 }
 
-/** @param {ListItem} item */
+/**
+ * A row has two columns: a lead (buttons in normal mode, the ref in expert
+ * mode; CSS picks which) and a body holding the mark, text, and detail.
+ * @param {ListItem} item
+ */
 function renderItem(item, onAction) {
-  const row = el('li', 'item');
-
+  const lead = el('div', 'item-lead');
   for (const action of item.actions || []) {
-    const button = el('button', 'btn btn-small', `[${action.label}]`);
+    const button = el('button', 'btn btn-small item-action', action.label);
     button.type = 'button';
     button.setAttribute('aria-label', `${action.label}: ${item.text}`);
     button.title = action.command;
     button.addEventListener('click', () => onAction(action.command, button));
-    row.append(button);
+    lead.append(button);
   }
+  if (item.ref) lead.append(el('span', 'item-ref', item.ref));
 
-  row.append(el('span', 'item-mark', item.mark || ''));
-  row.append(el('span', 'item-text', item.text));
-  if (item.detail) row.append(el('span', 'item-detail', item.detail));
+  const body = el('div', 'item-body');
+  body.append(el('span', 'item-mark', item.mark || ''));
+  body.append(el('span', 'item-text', item.text));
+  if (item.detail) body.append(el('span', 'item-detail', item.detail));
+
+  const row = el('li', 'item');
+  row.append(lead, body);
   return row;
 }

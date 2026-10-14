@@ -88,6 +88,7 @@ describe('dispatch: td', () => {
       text: 'Water plants',
       mark: '!!!',
       actions: [{ label: 'DONE', command: 'td task complete id:1' }],
+      ref: 'id:1',
     });
   });
 

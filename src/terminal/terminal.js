@@ -15,7 +15,7 @@ const TYPING_DELAY_MS = 35;
 /**
  * @param {Object} options
  * @param {{ output: HTMLElement, input: HTMLInputElement, cursor: HTMLElement,
- *           prompt: HTMLElement, actions: HTMLElement, buttonBar: HTMLElement }} options.elements
+ *           prompt: HTMLElement, app: HTMLElement, buttonBar: HTMLElement }} options.elements
  * @param {string} options.prompt
  * @param {CommandSet} options.commandSet
  * @param {Builtin[]} options.builtins
@@ -23,7 +23,7 @@ const TYPING_DELAY_MS = 35;
  * @param {ButtonDef[]} options.buttons
  */
 export function createTerminal({ elements, prompt, commandSet, builtins, ctx, buttons }) {
-  const { output, input, cursor, actions, buttonBar } = elements;
+  const { output, input, cursor, app, buttonBar } = elements;
   const history = new History();
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -89,8 +89,11 @@ export function createTerminal({ elements, prompt, commandSet, builtins, ctx, bu
     print(result);
   }
 
+  // One class on the app container switches everything at once (CSS does the
+  // rest): the button bar and task-row buttons hide, and id: refs show. This
+  // also applies to rows already on screen.
   function setExpertMode(expert) {
-    actions.hidden = expert;
+    app.classList.toggle('expert-mode', expert);
   }
 
   // ---- Typing animation (buttons only) -----------------------------------
@@ -204,15 +207,22 @@ export function createTerminal({ elements, prompt, commandSet, builtins, ctx, bu
       event.preventDefault();
       const line = history.next();
       if (line !== null) setInput(line);
+    } else if (event.key === 'PageUp' || event.key === 'PageDown') {
+      // The output has no visible scrollbar, so let the prompt scroll it.
+      event.preventDefault();
+      const page = output.clientHeight * 0.9;
+      output.scrollBy({ top: event.key === 'PageUp' ? -page : page });
     }
   });
 
   // Keep the block cursor in sync with the real caret. The font is monospace,
   // so the caret's x position is simply (caret index)ch, minus any scroll.
+  // The block is solid, so it re-draws the character under it (in reverse colors).
   function updateCursor() {
     const start = input.selectionStart ?? input.value.length;
     const hasSelection = start !== input.selectionEnd;
     cursor.hidden = hasSelection;
+    cursor.textContent = input.value[start] || ' ';
     cursor.style.transform = `translateX(calc(${start}ch - ${input.scrollLeft}px))`;
   }
   for (const type of ['input', 'keyup', 'click', 'select', 'scroll', 'focus']) {
@@ -231,6 +241,9 @@ export function createTerminal({ elements, prompt, commandSet, builtins, ctx, bu
   });
 
   // ---- Buttons ------------------------------------------------------------
+
+  // The CSS grid uses this to give every button an equal share of the row.
+  buttonBar.style.setProperty('--button-count', String(buttons.length));
 
   for (const def of buttons) {
     const button = document.createElement('button');

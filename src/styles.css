@@ -1,26 +1,47 @@
-/* Retro DOS adventure-game look: EGA palette, beveled gray chrome, blue panels. */
+/* Retro DOS adventure-game look: EGA palette, black page, cyan-framed blue
+   panels, and beveled gray chrome. All colors are defined here, once. */
 
 :root {
-  /* EGA palette */
+  /* EGA base palette (the 16-color hardware palette, minus what we don't use) */
   --ega-black: #000000;
   --ega-blue: #0000aa;
-  --ega-dark-blue: #000066; /* not true EGA; used for the action panel depth */
   --ega-light-gray: #aaaaaa;
   --ega-dark-gray: #555555;
   --ega-white: #ffffff;
-  --ega-cyan: #55ffff;
+  --ega-light-cyan: #55ffff;
   --ega-yellow: #ffff55;
-  --ega-light-red: #ff5555;
 
-  --font-dos: 'VT323', 'Perfect DOS VGA 437', 'Lucida Console', monospace;
+  /* Roles. Components use these, never the raw palette above. */
+  --color-page: var(--ega-black); /* page and action-bar background */
+  --color-frame: var(--ega-light-cyan); /* outer frame + panel borders */
+  --color-frame-gap: var(--ega-black); /* thin line between frame and panel */
+  --color-panel: var(--ega-blue); /* output panel background */
+  --color-text: var(--ega-white); /* normal output */
+  --color-dim: var(--ega-light-gray); /* secondary info, e.g. id: refs */
+  --color-echo: var(--ega-light-cyan); /* prompt, typed + echoed commands, cursor */
+  --color-success: var(--ega-light-cyan); /* confirmations, empty states */
+  --color-alert: var(--ega-yellow); /* errors, headings, priority marks */
+  --color-label: var(--ega-yellow); /* "CHOOSE AN ACTION:" */
+  --color-chrome: var(--ega-light-gray); /* title bar + button faces */
+  --color-chrome-text: var(--ega-black);
+  --color-bevel-light: var(--ega-white);
+  --color-bevel-dark: var(--ega-dark-gray);
+  --color-focus: var(--ega-yellow);
+
+  --font-dos: 'VT323', 'Lucida Console', monospace;
+  --font-title: 'Press Start 2P', 'VT323', monospace;
   --font-size: 26px;
+  --title-size: 28px;
   --bevel: 4px;
+  --frame: 4px;
 }
 
 @media (max-width: 600px) {
   :root {
     --font-size: 21px;
+    --title-size: 18px;
     --bevel: 3px;
+    --frame: 3px;
   }
 }
 
@@ -37,63 +58,65 @@ body {
 }
 
 body {
-  background: var(--ega-black);
-  color: var(--ega-white);
+  background: var(--color-page);
+  color: var(--color-text);
   font-family: var(--font-dos);
   font-size: var(--font-size);
   line-height: 1.15;
 }
 
-/* ---- Layout ------------------------------------------------------------ */
+/* ---- Frame and layout -------------------------------------------------- */
 
 .app {
   display: flex;
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
-  padding: 8px;
-  gap: 8px;
-  background: var(--ega-light-gray);
+  padding: 12px;
+  gap: 12px;
+  background: var(--color-page);
+  border: var(--frame) solid var(--color-frame);
 }
 
 /* Raised gray bevel, used by the title bar and buttons */
 .titlebar,
 .btn {
-  background: var(--ega-light-gray);
+  background: var(--color-chrome);
+  color: var(--color-chrome-text);
   border: var(--bevel) solid;
-  border-color: var(--ega-white) var(--ega-dark-gray) var(--ega-dark-gray) var(--ega-white);
-}
-
-/* Sunken bevel around the blue panels */
-.screen,
-.actions {
-  border: var(--bevel) solid;
-  border-color: var(--ega-dark-gray) var(--ega-white) var(--ega-white) var(--ega-dark-gray);
+  border-color: var(--color-bevel-light) var(--color-bevel-dark) var(--color-bevel-dark)
+    var(--color-bevel-light);
 }
 
 .titlebar {
-  padding: 2px 12px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* right side reserved for a future username */
+  padding: 10px 16px;
 }
 
 .titlebar-text {
   margin: 0;
-  font-size: 1.3em;
-  font-weight: normal;
-  letter-spacing: 0.3em;
+  font-family: var(--font-title);
+  font-size: var(--title-size);
+  font-weight: normal; /* the pixel font is already heavy */
+  line-height: 1;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ega-black);
 }
 
 /* ---- Output panel + prompt --------------------------------------------- */
 
+/* Cyan frame with a thin black gap inside it, around a blue panel */
 .screen {
   flex: 1;
   min-height: 0; /* lets the output scroll inside the flex column */
   display: flex;
   flex-direction: column;
-  background: var(--ega-blue);
-  padding: 8px 12px;
+  background: var(--color-panel);
+  border: var(--frame) solid var(--color-frame);
+  box-shadow: inset 0 0 0 3px var(--color-frame-gap);
+  padding: 12px 16px;
   cursor: text;
 }
 
@@ -101,6 +124,17 @@ body {
   flex: 1;
   overflow-y: auto;
   overflow-wrap: anywhere;
+  /* Scrollable, but with no visible scrollbar. */
+  scrollbar-width: none; /* Firefox, and Chromium 121+ */
+}
+
+.output::-webkit-scrollbar {
+  display: none; /* Older Chromium and Safari */
+}
+
+.output:focus-visible {
+  outline: 2px dashed var(--color-focus);
+  outline-offset: 2px;
 }
 
 .line {
@@ -108,60 +142,99 @@ body {
   min-height: 1.15em;
 }
 
-.prompt {
-  color: var(--ega-white);
-}
-
+/* Prompt and command text: on the input line and in echoed commands */
+.prompt,
 .echo-text {
-  color: var(--ega-white);
+  color: var(--color-echo);
 }
 
 .tone-info {
-  color: var(--ega-white);
+  color: var(--color-text);
 }
 
 .tone-success {
-  color: var(--ega-cyan);
+  color: var(--color-success);
 }
 
 .tone-error {
-  color: var(--ega-yellow);
+  color: var(--color-alert);
 }
 
 .list-title {
-  color: var(--ega-yellow);
+  color: var(--color-alert);
   text-transform: uppercase;
 }
 
+/* Task rows: two columns, shared across the whole list via subgrid so every
+   row's text starts at the same x. Left: DONE button (or id: ref in expert
+   mode). Right: mark + text + detail, wrapping inside its own column. */
 .items {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 1ch;
   list-style: none;
   margin: 0 0 0.3em;
   padding: 0;
 }
 
 .item {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: start;
+  padding: 2px 0;
+}
+
+.item-lead {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  column-gap: 0.6ch;
-  padding: 1px 0;
+  gap: 4px;
+}
+
+/* Hanging indent: the mark sits in a fixed 4ch slot on the first line, and
+   wrapped lines line up with the start of the task text, not the mark. */
+.item-body {
+  padding-left: 4ch;
+  text-indent: -4ch;
 }
 
 .item-mark {
-  color: var(--ega-yellow);
-  min-width: 3ch;
+  display: inline-block;
+  width: 4ch;
+  text-indent: 0;
+  color: var(--color-alert);
 }
 
 .item-text {
-  color: var(--ega-white);
+  color: var(--color-text);
 }
 
 .item-detail {
-  color: var(--ega-cyan);
+  color: var(--color-success);
 }
 
 .item-detail::before {
-  content: '- ';
+  content: ' - ';
+}
+
+.item-ref {
+  display: none; /* shown only in expert mode */
+  color: var(--color-dim);
+}
+
+.expert-mode .item-action {
+  display: none;
+}
+
+.expert-mode .item-ref {
+  display: inline;
+}
+
+/* On phones the 19-character ref would squeeze the text column, so shrink it. */
+@media (max-width: 600px) {
+  .item-ref {
+    font-size: 0.75em;
+    line-height: 1.55; /* keeps its baseline near the first text line */
+  }
 }
 
 .prompt-line {
@@ -183,21 +256,24 @@ body {
   border: 0;
   outline: none;
   background: transparent;
-  color: var(--ega-white);
+  color: var(--color-echo);
   font: inherit;
+  line-height: inherit;
   caret-color: transparent; /* the block cursor below replaces the native caret */
 }
 
-/* Blinking block cursor. `difference` with white over EGA blue gives yellow,
-   and the character underneath stays readable. */
+/* Blinking solid block cursor. terminal.js puts the character under the caret
+   inside it, drawn in reverse (panel color on cyan). */
 .cursor {
   position: absolute;
   left: 0;
-  top: 0.1em;
+  top: 0;
   width: 1ch;
-  height: 1em;
-  background: var(--ega-white);
-  mix-blend-mode: difference;
+  height: 1.15em;
+  overflow: hidden;
+  background: var(--color-echo);
+  color: var(--color-panel);
+  white-space: pre;
   pointer-events: none;
   animation: blink 1s steps(1) infinite;
 }
@@ -217,80 +293,92 @@ body {
   }
 }
 
-/* ---- Action panel + buttons ------------------------------------------- */
+/* ---- Action bar + buttons --------------------------------------------- */
 
-.actions {
-  background: var(--ega-blue);
-  padding: 6px 12px 12px;
-}
-
-.actions[hidden] {
+/* Sits directly on the black page, no panel behind it */
+.expert-mode .actions {
   display: none;
 }
 
 .actions-label {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-size: 1em;
   font-weight: normal;
-  color: var(--ega-yellow);
+  color: var(--color-label);
 }
 
+/* Every button gets an equal share of the full width. terminal.js sets
+   --button-count from the number of buttons. */
 .button-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(var(--button-count, 6), minmax(0, 1fr));
+  gap: 14px;
 }
 
 .btn {
-  min-width: 7.5ch;
-  padding: 2px 14px;
+  padding: 6px 8px;
   font: inherit;
-  color: var(--ega-black);
+  font-size: 1.1em;
   cursor: pointer;
 }
 
 .btn:active,
 .btn.pressed {
-  border-color: var(--ega-dark-gray) var(--ega-white) var(--ega-white) var(--ega-dark-gray);
-  padding: 3px 13px 1px 15px; /* nudge the label down-right, like a pressed key */
+  border-color: var(--color-bevel-dark) var(--color-bevel-light) var(--color-bevel-light)
+    var(--color-bevel-dark);
+  padding: 7px 7px 5px 9px; /* nudge the label down-right, like a pressed key */
 }
 
 .btn:focus-visible {
-  outline: 3px solid var(--ega-yellow);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
+/* Same bevel and font as the action buttons, scaled down to fit one text line. */
 .btn-small {
-  min-width: 0;
-  padding: 0 4px;
+  padding: 1px 8px;
   font-size: 0.8em;
-  border-width: 2px;
   line-height: 1;
+  border-width: 3px;
 }
 
-.btn-small:active {
-  padding: 1px 3px 0 5px;
+.btn-small:active,
+.btn-small.pressed {
+  padding: 2px 7px 0 9px;
 }
 
-/* While a button command is typing, the mouse cursor shows it's busy. */
+/* While a button command is typing or running, the mouse shows it's busy. */
 .is-typing .btn,
 .is-busy .btn {
   cursor: progress;
 }
 
+/* Narrow screens: wrap into even rows of three (two on very small phones). */
+@media (max-width: 760px) {
+  .button-bar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
+
+@media (max-width: 340px) {
+  .button-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 600px) {
   .app {
-    padding: 4px;
-    gap: 4px;
+    padding: 6px;
+    gap: 8px;
   }
 
-  .button-bar {
-    gap: 6px;
+  .titlebar {
+    padding: 8px 10px;
   }
 
-  .btn {
-    flex: 1 1 28%; /* three per row on phones */
-    padding-inline: 4px;
+  .screen {
+    padding: 8px 10px;
   }
 }
 
