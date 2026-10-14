@@ -41,9 +41,11 @@ tests/              Vitest tests, including boundary.test.js
   matches with their `id:` refs.
 
 ## Buttons and animation
-- Buttons never call handlers directly. A button sends a command string to
-  `terminal.runFromButton()`, which types it and then calls the same `submit()`
-  path as typed input.
+- Buttons and task-row checkboxes never call handlers directly. They send a
+  command string to `terminal.runFromButton()`, which types it and then calls
+  the same `submit()` path as typed input. `runFromButton()` returns a promise
+  of the command's Result (or null if the click was ignored). That's how a
+  checkbox learns whether its command succeeded.
 - Only button-initiated commands animate, at 35ms per character. Typed commands
   run immediately, and output never animates.
 - Input is locked while a command types, and extra clicks are ignored. Any
@@ -92,14 +94,27 @@ Future apps on this UI reuse the same look.
   - They share the full width equally in a grid (`--button-count`, set by
     `terminal.js`), and wrap to rows of 3, or 2 on very small screens.
 - **Task rows:**
-  - Each row has two columns, shared across the list via CSS subgrid. The left
-    column holds the small DONE button, which has the same bevel and font as the
-    action buttons. The right column holds the mark, text, and detail, wrapping
-    with a hanging indent (marks sit in a fixed 4ch slot).
+  - Each row has two columns, shared across the list via CSS subgrid, with a
+    1ch gap. The left column is exactly as wide as its content: `[ ]` in normal
+    mode, the `id:` ref in expert mode.
+  - The right column holds an optional priority mark, then a text block (task
+    text plus detail) that wraps on its own. Wrapped lines hang under the task
+    text.
+  - Due dates read "today" for today, and keep the date otherwise. Overdue dates
+    use `--color-warning` (yellow; light red is only 4.2:1 on blue). The item's
+    `detailWarning` text ("overdue") is added as screen-reader-only text, so
+    color isn't the only signal.
+  - The checkbox is a `<button role="checkbox" aria-checked>` labelled by the
+    task text (`aria-labelledby`), with a yellow focus outline.
+  - It shows `[ ]` while open and turns yellow on hover or while its command
+    types.
+  - It shows `[X]` in cyan only after the command returns a success message.
+    The row's text then dims and is struck through, and the box becomes
+    disabled. There is no uncomplete yet. A failed command leaves it `[ ]`.
   - Secondary info such as `id:` refs uses `--color-dim` (light gray). On
     phones the refs are shrunk so they don't squeeze the text column.
 - **Expert mode:** `mode expert` adds the `expert-mode` class to `#app`. CSS
-  then hides the button bar and the row buttons, and shows each row's `id:` ref
+  then hides the button bar and the row checkboxes, and shows each row's `id:` ref
   instead. Because it's one class, rows already on screen switch too.
 - **Output panel:** it scrolls, but its scrollbar is hidden in all browsers.
   The wheel, touch, keyboard (when focused), and PageUp/PageDown from the

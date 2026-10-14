@@ -27,7 +27,8 @@ export function createTerminal({ elements, prompt, commandSet, builtins, ctx, bu
   const history = new History();
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  /** @type {null | { text: string, typed: number, timer: number, def: ButtonDef, button?: HTMLElement }} */
+  /** @type {null | { text: string, typed: number, timer: number, def: ButtonDef,
+   *                   button?: HTMLElement, resolve: (r: Promise<Result | null>) => void }} */
   let animation = null;
   let busy = false; // true while a command is running
   let swallowNextClick = false; // a click that only served to skip an animation
@@ -49,9 +50,13 @@ export function createTerminal({ elements, prompt, commandSet, builtins, ctx, bu
 
   // ---- Running commands ---------------------------------------------------
 
-  /** The one path every command takes, typed or from a button. */
+  /**
+   * The one path every command takes, typed or from a button.
+   * @param {string} line
+   * @returns {Promise<Result | null>} the command's result, or null if ignored (busy)
+   */
   async function submit(line) {
-    if (busy) return;
+    if (busy) return null;
     busy = true;
     document.body.classList.add('is-busy');
 
@@ -62,6 +67,7 @@ export function createTerminal({ elements, prompt, commandSet, builtins, ctx, bu
     try {
       const result = await dispatch(line, { commandSet, builtins, ctx });
       apply(result);
+      return result;
     } finally {
       busy = false;
       document.body.classList.remove('is-busy');
@@ -102,23 +108,26 @@ export function createTerminal({ elements, prompt, commandSet, builtins, ctx, bu
    * Type a command into the prompt, then run it (unless def.execute is false).
    * @param {ButtonDef | string} defOrCommand
    * @param {HTMLElement} [button]  shown pressed while its command types
+   * @returns {Promise<Result | null>} resolves once the command has run, with its
+   *   result; null if the click was ignored or the command was only typed
    */
   function runFromButton(defOrCommand, button) {
-    if (animation || busy) return; // extra clicks are ignored
+    if (animation || busy) return Promise.resolve(null); // extra clicks are ignored
     const def = typeof defOrCommand === 'string' ? { command: defOrCommand } : defOrCommand;
 
     if (reducedMotion.matches) {
-      finishTyping(def);
-      return;
+      return finishTyping(def);
     }
 
     setInput('');
     input.readOnly = true;
     document.body.classList.add('is-typing');
     button?.classList.add('pressed');
-    animation = { text: def.command, typed: 0, def, timer: 0, button };
-    animation.timer = window.setInterval(typeNextChar, TYPING_DELAY_MS);
     input.focus();
+    return new Promise((resolve) => {
+      animation = { text: def.command, typed: 0, def, timer: 0, button, resolve };
+      animation.timer = window.setInterval(typeNextChar, TYPING_DELAY_MS);
+    });
   }
 
   function typeNextChar() {
@@ -130,16 +139,19 @@ export function createTerminal({ elements, prompt, commandSet, builtins, ctx, bu
   /** Jump straight to the end of the current animation. */
   function skipAnimation() {
     if (!animation) return;
-    const { def, timer, button } = animation;
+    const { def, timer, button, resolve } = animation;
     window.clearInterval(timer);
     button?.classList.remove('pressed');
     animation = null;
     input.readOnly = false;
     document.body.classList.remove('is-typing');
-    finishTyping(def);
+    resolve(finishTyping(def));
   }
 
-  /** @param {ButtonDef} def */
+  /**
+   * @param {ButtonDef} def
+   * @returns {Promise<Result | null>}
+   */
   function finishTyping(def) {
     setInput(def.command);
     input.focus();
@@ -147,9 +159,9 @@ export function createTerminal({ elements, prompt, commandSet, builtins, ctx, bu
       const caret = def.caret ?? def.command.length;
       input.setSelectionRange(caret, caret);
       updateCursor();
-    } else {
-      submit(def.command);
+      return Promise.resolve(null);
     }
+    return submit(def.command);
   }
 
   // Any keypress or click during the animation skips to the end. Capture phase,

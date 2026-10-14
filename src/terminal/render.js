@@ -25,7 +25,8 @@ export function renderEcho(prompt, line) {
 
 /**
  * @param {Result} result
- * @param {{ onAction: (command: string, button: HTMLElement) => void }} hooks
+ * @param {{ onAction: (command: string, button: HTMLElement) => Promise<Result | null> }} hooks
+ *   onAction types and runs a command, resolving with its result once it has run
  * @returns {HTMLElement | null}
  */
 export function renderResult(result, { onAction }) {
@@ -64,29 +65,68 @@ function renderItemList(result, onAction) {
   return block;
 }
 
+let nextTextId = 0;
+
 /**
- * A row has two columns: a lead (buttons in normal mode, the ref in expert
+ * A row has two columns: a lead (checkbox in normal mode, the ref in expert
  * mode; CSS picks which) and a body holding the mark, text, and detail.
  * @param {ListItem} item
  */
 function renderItem(item, onAction) {
+  const row = el('li', 'item');
+  const textEl = el('span', 'item-text', item.text);
+  textEl.id = `item-text-${++nextTextId}`;
+
   const lead = el('div', 'item-lead');
-  for (const action of item.actions || []) {
-    const button = el('button', 'btn btn-small item-action', action.label);
-    button.type = 'button';
-    button.setAttribute('aria-label', `${action.label}: ${item.text}`);
-    button.title = action.command;
-    button.addEventListener('click', () => onAction(action.command, button));
-    lead.append(button);
-  }
+  if (item.checkCommand) lead.append(renderCheckbox(item.checkCommand, textEl.id, row, onAction));
   if (item.ref) lead.append(el('span', 'item-ref', item.ref));
 
+  // Body: optional mark, then a block with the text + detail that wraps on its
+  // own, so wrapped lines hang under the text (not under the mark).
   const body = el('div', 'item-body');
-  body.append(el('span', 'item-mark', item.mark || ''));
-  body.append(el('span', 'item-text', item.text));
-  if (item.detail) body.append(el('span', 'item-detail', item.detail));
+  if (item.mark) body.append(el('span', 'item-mark', item.mark));
+  const main = el('span', 'item-main');
+  main.append(textEl);
+  // A real space (not a margin) so it disappears if the detail wraps to a new line.
+  if (item.detail) main.append(' ', renderDetail(item));
+  body.append(main);
 
-  const row = el('li', 'item');
   row.append(lead, body);
   return row;
+}
+
+/** @param {ListItem} item */
+function renderDetail(item) {
+  if (!item.detailWarning) return el('span', 'item-detail', item.detail);
+  // Color alone shouldn't carry the meaning, so add the warning as hidden text.
+  const detail = el('span', 'item-detail is-warning', item.detail);
+  detail.append(el('span', 'sr-only', ` (${item.detailWarning})`));
+  return detail;
+}
+
+/**
+ * A DOS-style "[ ]" checkbox. It's a real button with role="checkbox", so it is
+ * focusable and toggled with Space/Enter, and its name is the task text.
+ * Clicking types and runs `command`; only a success result ticks it ("[X]").
+ * Once ticked it is inert (no uncomplete yet).
+ */
+function renderCheckbox(command, labelId, row, onAction) {
+  const box = el('button', 'checkbox item-action', '[ ]');
+  box.type = 'button';
+  box.setAttribute('role', 'checkbox');
+  box.setAttribute('aria-checked', 'false');
+  box.setAttribute('aria-labelledby', labelId);
+  box.title = command;
+
+  box.addEventListener('click', async () => {
+    if (box.getAttribute('aria-checked') === 'true') return;
+    const result = await onAction(command, box);
+    if (result?.type === 'message' && result.tone === 'success') {
+      box.setAttribute('aria-checked', 'true');
+      box.textContent = '[X]';
+      box.disabled = true;
+      row.classList.add('is-done');
+    }
+  });
+  return box;
 }

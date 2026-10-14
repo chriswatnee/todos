@@ -2,21 +2,18 @@
 // plain shapes; the terminal never needs to know which backend made them.
 
 /**
- * A clickable action attached to a list item. Clicking types and runs `command`.
- * @typedef {Object} ItemAction
- * @property {string} label    button text, e.g. "DONE"
- * @property {string} command  full command line, e.g. "td task complete id:123"
- */
-
-/**
  * One row in an item list.
  * @typedef {Object} ListItem
- * @property {string} text          main text (untrusted, rendered as text only)
- * @property {string} [detail]      secondary text, e.g. a due date
- * @property {string} [mark]        short marker, e.g. "!!!" for priority
- * @property {ItemAction[]} [actions]  buttons, shown in normal mode
- * @property {string} [ref]            short reference (e.g. "id:123") shown instead of
- *                                     the buttons in expert mode, so it can be typed
+ * @property {string} text            main text (untrusted, rendered as text only)
+ * @property {string} [detail]        secondary text, e.g. a due date
+ * @property {string} [detailWarning] if set, the detail is shown in the warning color,
+ *   and this text (e.g. "overdue") is added for screen readers only
+ * @property {string} [mark]          short marker, e.g. "!!!" for priority
+ * @property {string} [checkCommand]  if set, the row gets a "[ ]" checkbox (normal mode)
+ *   that types and runs this command, e.g. "td task complete id:123". The box shows
+ *   "[X]" once the command returns a success message.
+ * @property {string} [ref]           short reference (e.g. "id:123") shown instead of
+ *                                    the checkbox in expert mode, so it can be typed
  */
 
 /**

@@ -191,31 +191,40 @@ function sortForToday(tasks) {
  * @returns {Result}
  */
 function taskList(title, tasks, emptyText) {
-  return { type: 'itemList', title, emptyText, items: tasks.map(toListItem) };
+  const now = new Date();
+  return { type: 'itemList', title, emptyText, items: tasks.map((t) => toListItem(t, now)) };
 }
 
 const PRIORITY_MARKS = { 4: '!!!', 3: '!!', 2: '!', 1: '' };
 
-/** @param {Task} task @returns {ListItem} */
-export function toListItem(task) {
-  return {
+/**
+ * @param {Task} task
+ * @param {Date} [now]  injectable for tests
+ * @returns {ListItem}
+ */
+export function toListItem(task, now = new Date()) {
+  const item = {
     text: task.content,
     mark: PRIORITY_MARKS[task.priority] ?? '',
-    detail: dueText(task.due),
-    actions: [{ label: 'DONE', command: `td task complete id:${task.id}` }],
+    checkCommand: `td task complete id:${task.id}`,
     ref: `id:${task.id}`,
   };
+  if (task.due) {
+    const day = task.due.date.slice(0, 10); // "YYYY-MM-DD", with or without a time
+    const today = localDateString(now);
+    if (day === today) {
+      item.detail = 'today';
+    } else {
+      item.detail = task.due.string || day;
+      // Overdue dates show in the warning color; the note is for screen readers.
+      if (day < today) item.detailWarning = 'overdue';
+    }
+  }
+  return item;
 }
 
-function dueText(due) {
-  if (!due) return '';
-  const label = due.string || due.date;
-  return isOverdue(due.date) ? `${label} - OVERDUE` : label;
-}
-
-function isOverdue(dueDate) {
-  const now = new Date();
+/** Local calendar date as "YYYY-MM-DD" (Todoist due dates are in the user's local time). */
+function localDateString(date) {
   const pad = (n) => String(n).padStart(2, '0');
-  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  return dueDate.slice(0, 10) < today;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }

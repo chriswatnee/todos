@@ -87,7 +87,7 @@ describe('dispatch: td', () => {
     expect(result.items[0]).toMatchObject({
       text: 'Water plants',
       mark: '!!!',
-      actions: [{ label: 'DONE', command: 'td task complete id:1' }],
+      checkCommand: 'td task complete id:1',
       ref: 'id:1',
     });
   });
