@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>%APP_NAME%</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="titlebar">
+        <h1 class="titlebar-text">%APP_NAME%</h1>
+      </header>
+
+      <main class="screen">
+        <div id="output" class="output" role="log" aria-live="polite" aria-label="Output"></div>
+
+        <div class="prompt-line">
+          <span id="prompt" class="prompt" aria-hidden="true"></span>
+          <div class="input-wrap">
+            <input
+              id="command-input"
+              class="command-input"
+              type="text"
+              aria-label="Command"
+              autocomplete="off"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
+            />
+            <span id="cursor" class="cursor" aria-hidden="true"></span>
+          </div>
+        </div>
+      </main>
+
+      <section id="actions" class="actions" aria-labelledby="actions-label">
+        <h2 id="actions-label" class="actions-label">CHOOSE AN ACTION:</h2>
+        <div id="button-bar" class="button-bar"></div>
+      </section>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

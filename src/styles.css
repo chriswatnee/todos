@@ -1,0 +1,301 @@
+/* Retro DOS adventure-game look: EGA palette, beveled gray chrome, blue panels. */
+
+:root {
+  /* EGA palette */
+  --ega-black: #000000;
+  --ega-blue: #0000aa;
+  --ega-dark-blue: #000066; /* not true EGA; used for the action panel depth */
+  --ega-light-gray: #aaaaaa;
+  --ega-dark-gray: #555555;
+  --ega-white: #ffffff;
+  --ega-cyan: #55ffff;
+  --ega-yellow: #ffff55;
+  --ega-light-red: #ff5555;
+
+  --font-dos: 'VT323', 'Perfect DOS VGA 437', 'Lucida Console', monospace;
+  --font-size: 26px;
+  --bevel: 4px;
+}
+
+@media (max-width: 600px) {
+  :root {
+    --font-size: 21px;
+    --bevel: 3px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--ega-black);
+  color: var(--ega-white);
+  font-family: var(--font-dos);
+  font-size: var(--font-size);
+  line-height: 1.15;
+}
+
+/* ---- Layout ------------------------------------------------------------ */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  padding: 8px;
+  gap: 8px;
+  background: var(--ega-light-gray);
+}
+
+/* Raised gray bevel, used by the title bar and buttons */
+.titlebar,
+.btn {
+  background: var(--ega-light-gray);
+  border: var(--bevel) solid;
+  border-color: var(--ega-white) var(--ega-dark-gray) var(--ega-dark-gray) var(--ega-white);
+}
+
+/* Sunken bevel around the blue panels */
+.screen,
+.actions {
+  border: var(--bevel) solid;
+  border-color: var(--ega-dark-gray) var(--ega-white) var(--ega-white) var(--ega-dark-gray);
+}
+
+.titlebar {
+  padding: 2px 12px;
+  text-align: center;
+}
+
+.titlebar-text {
+  margin: 0;
+  font-size: 1.3em;
+  font-weight: normal;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ega-black);
+}
+
+/* ---- Output panel + prompt --------------------------------------------- */
+
+.screen {
+  flex: 1;
+  min-height: 0; /* lets the output scroll inside the flex column */
+  display: flex;
+  flex-direction: column;
+  background: var(--ega-blue);
+  padding: 8px 12px;
+  cursor: text;
+}
+
+.output {
+  flex: 1;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+
+.line {
+  white-space: pre-wrap;
+  min-height: 1.15em;
+}
+
+.prompt {
+  color: var(--ega-white);
+}
+
+.echo-text {
+  color: var(--ega-white);
+}
+
+.tone-info {
+  color: var(--ega-white);
+}
+
+.tone-success {
+  color: var(--ega-cyan);
+}
+
+.tone-error {
+  color: var(--ega-yellow);
+}
+
+.list-title {
+  color: var(--ega-yellow);
+  text-transform: uppercase;
+}
+
+.items {
+  list-style: none;
+  margin: 0 0 0.3em;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.6ch;
+  padding: 1px 0;
+}
+
+.item-mark {
+  color: var(--ega-yellow);
+  min-width: 3ch;
+}
+
+.item-text {
+  color: var(--ega-white);
+}
+
+.item-detail {
+  color: var(--ega-cyan);
+}
+
+.item-detail::before {
+  content: '- ';
+}
+
+.prompt-line {
+  display: flex;
+  align-items: baseline;
+  padding-top: 4px;
+}
+
+.input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.command-input {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ega-white);
+  font: inherit;
+  caret-color: transparent; /* the block cursor below replaces the native caret */
+}
+
+/* Blinking block cursor. `difference` with white over EGA blue gives yellow,
+   and the character underneath stays readable. */
+.cursor {
+  position: absolute;
+  left: 0;
+  top: 0.1em;
+  width: 1ch;
+  height: 1em;
+  background: var(--ega-white);
+  mix-blend-mode: difference;
+  pointer-events: none;
+  animation: blink 1s steps(1) infinite;
+}
+
+.cursor[hidden] {
+  display: none;
+}
+
+.command-input:not(:focus) + .cursor {
+  animation: none;
+  opacity: 0.4;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ---- Action panel + buttons ------------------------------------------- */
+
+.actions {
+  background: var(--ega-blue);
+  padding: 6px 12px 12px;
+}
+
+.actions[hidden] {
+  display: none;
+}
+
+.actions-label {
+  margin: 0 0 6px;
+  font-size: 1em;
+  font-weight: normal;
+  color: var(--ega-yellow);
+}
+
+.button-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.btn {
+  min-width: 7.5ch;
+  padding: 2px 14px;
+  font: inherit;
+  color: var(--ega-black);
+  cursor: pointer;
+}
+
+.btn:active,
+.btn.pressed {
+  border-color: var(--ega-dark-gray) var(--ega-white) var(--ega-white) var(--ega-dark-gray);
+  padding: 3px 13px 1px 15px; /* nudge the label down-right, like a pressed key */
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--ega-yellow);
+  outline-offset: 2px;
+}
+
+.btn-small {
+  min-width: 0;
+  padding: 0 4px;
+  font-size: 0.8em;
+  border-width: 2px;
+  line-height: 1;
+}
+
+.btn-small:active {
+  padding: 1px 3px 0 5px;
+}
+
+/* While a button command is typing, the mouse cursor shows it's busy. */
+.is-typing .btn,
+.is-busy .btn {
+  cursor: progress;
+}
+
+@media (max-width: 600px) {
+  .app {
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .button-bar {
+    gap: 6px;
+  }
+
+  .btn {
+    flex: 1 1 28%; /* three per row on phones */
+    padding-inline: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor {
+    animation: none;
+  }
+}
