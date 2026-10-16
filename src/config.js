@@ -4,5 +4,5 @@
 export const APP_NAME = 'Retro Todolist';
 export const APP_ID = 'retro-todolist';
 
-/** Text shown before the input, DOS style. */
-export const PROMPT = 'C:\\TODO>';
+/** Text shown before the input, classic adventure-game parser style. */
+export const PROMPT = '>';

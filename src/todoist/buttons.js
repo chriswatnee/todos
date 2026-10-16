@@ -8,6 +8,6 @@ export const tdButtons = [
   // Types `td add ""`, leaves the caret between the quotes, and waits for the user.
   { label: 'ADD', command: 'td add ""', execute: false, caret: 'td add "'.length },
   { label: 'HELP', command: 'help' },
-  { label: 'CLS', command: 'cls' },
-  { label: 'EXPERT', command: 'mode expert' },
+  { label: 'CLEAR', command: 'clear' },
+  { label: 'EXPERT', command: 'expert on' },
 ];

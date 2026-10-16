@@ -1,7 +1,7 @@
 # Retro Todolist
 
-A to-do list client that looks like a late-80s DOS adventure game: EGA colors,
-beveled gray buttons, and a command prompt. The current backend is
+A to-do list client that looks like a late-80s adventure game: EGA colors,
+beveled gray buttons, and a `>` parser prompt. The current backend is
 [Todoist](https://todoist.com), driven through commands that match the official
 Todoist CLI (`td`).
 
@@ -55,8 +55,8 @@ Runs the Vitest unit tests.
 | `td task complete <ref>` | Complete a task. `<ref>` is `id:xxx` or a task name (case-insensitive; ambiguous names are refused) |
 | `td --help` | The td commands this app supports |
 | `help` | Built-in shell commands |
-| `cls` | Clear the screen |
-| `mode expert` / `mode normal` | Hide or show the button bar |
+| `clear` | Clear the screen |
+| `expert on` / `expert off` | Hide or show the button bar |
 
 Up and Down arrows cycle through command history. Pressing any key or clicking
 during a button's typing animation skips to the end of the animation.

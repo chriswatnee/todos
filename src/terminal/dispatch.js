@@ -35,7 +35,11 @@ export async function dispatch(line, { commandSet, builtins, ctx }) {
     return { type: 'message', tone: 'error', text: `General failure: ${err?.message || err}` };
   }
 
-  return { type: 'message', tone: 'error', text: 'Bad command or file name' };
+  return {
+    type: 'message',
+    tone: 'error',
+    text: `I don't understand "${first}". Type help for commands.`,
+  };
 }
 
 /**

@@ -32,7 +32,7 @@ const terminal = createTerminal({
 
 terminal.print({
   type: 'lines',
-  lines: [`${APP_NAME.toUpperCase()} v0.1`, 'Type help for built-in commands, or td --help.', ''],
+  lines: [`${APP_NAME.toUpperCase()} v0.1`, 'Type help for commands, or td --help for Todoist commands.', ''],
 });
 
 if (!api.hasToken) {

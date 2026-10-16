@@ -16,39 +16,46 @@ describe('dispatch: built-ins', () => {
     expect(await dispatch('   ', makeEnv())).toEqual({ type: 'none' });
   });
 
-  it('cls clears the screen', async () => {
-    expect(await dispatch('cls', makeEnv())).toEqual({ type: 'clear' });
+  it('clear clears the screen', async () => {
+    expect(await dispatch('clear', makeEnv())).toEqual({ type: 'clear' });
   });
 
-  it('built-ins are case-insensitive, like DOS', async () => {
-    expect(await dispatch('CLS', makeEnv())).toEqual({ type: 'clear' });
+  it('built-ins are case-insensitive', async () => {
+    expect(await dispatch('CLEAR', makeEnv())).toEqual({ type: 'clear' });
+    expect(await dispatch('EXPERT ON', makeEnv())).toEqual({ type: 'setMode', expert: true });
+  });
+
+  it('cls is gone', async () => {
+    expect(await dispatch('cls', makeEnv())).toMatchObject({ type: 'message', tone: 'error' });
   });
 
   it('help lists built-ins and points to td --help', async () => {
     const result = await dispatch('help', makeEnv());
     expect(result.type).toBe('lines');
     const text = result.lines.join('\n');
-    expect(text).toContain('cls');
-    expect(text).toContain('mode expert|normal');
+    expect(text).toContain('clear');
+    expect(text).toContain('expert on|off');
+    expect(text).not.toContain('cls');
+    expect(text).not.toContain('mode');
     expect(result.lines.at(-1)).toBe('Type td --help for Todoist commands.');
   });
 
-  it('mode expert / mode normal toggle expert mode', async () => {
-    expect(await dispatch('mode expert', makeEnv())).toEqual({ type: 'setMode', expert: true });
-    expect(await dispatch('mode normal', makeEnv())).toEqual({ type: 'setMode', expert: false });
+  it('expert on / expert off toggle expert mode', async () => {
+    expect(await dispatch('expert on', makeEnv())).toEqual({ type: 'setMode', expert: true });
+    expect(await dispatch('expert off', makeEnv())).toEqual({ type: 'setMode', expert: false });
   });
 
-  it('mode with a bad argument shows usage', async () => {
-    const result = await dispatch('mode turbo', makeEnv());
+  it('expert with a bad argument shows usage', async () => {
+    const result = await dispatch('expert turbo', makeEnv());
     expect(result).toMatchObject({ type: 'message', tone: 'error' });
-    expect(result.text).toContain('Usage: mode');
+    expect(result.text).toBe('Usage: expert on|off');
   });
 
-  it('unknown input is a bad command', async () => {
-    expect(await dispatch('dir /w', makeEnv())).toEqual({
+  it('unknown input names the first word, parser style', async () => {
+    expect(await dispatch('xyzzy plugh', makeEnv())).toEqual({
       type: 'message',
       tone: 'error',
-      text: 'Bad command or file name',
+      text: 'I don\'t understand "xyzzy". Type help for commands.',
     });
   });
 });

@@ -87,7 +87,7 @@ export function createTerminal({ elements, prompt, commandSet, builtins, ctx, bu
       print({
         type: 'message',
         text: result.expert
-          ? 'Expert mode. Buttons hidden. Type mode normal to bring them back.'
+          ? 'Expert mode. Buttons hidden. Type expert off to bring them back.'
           : 'Normal mode. Buttons shown.',
       });
       return;

@@ -1,9 +1,18 @@
 # Retro Todolist: conventions
 
-A DOS-adventure-game-styled to-do client. Today the backend is Todoist (API v1),
+A to-do client styled like a classic late-80s adventure game. Today the backend is Todoist (API v1),
 driven by commands that mirror the official `td` CLI. Vite + vanilla JS (ES
 modules), with no framework and no TypeScript. JSDoc types the important shapes. Tests
 use Vitest. Favor clear, plain code over cleverness.
+
+## Design direction
+- The shell is a classic adventure-game text parser (Infocom/Sierra style),
+  not a DOS prompt. The prompt is a bare `>`, built-ins are plain words
+  (`clear`, `help`, `expert on|off`), and messages talk like a parser
+  (`I don't understand "xyzzy". Type help for commands.`). Avoid DOS-isms
+  such as `C:\` prompts, `cls`, or "Bad command or file name".
+- The EGA palette and beveled frame stay. The td commands themselves never
+  change; they mirror the real CLI.
 
 ## Naming
 - The app is **Retro Todolist**. The display name is defined once, in
@@ -32,8 +41,9 @@ tests/              Vitest tests, including boundary.test.js
   `name`, `summary`, `usage`, and `handler`.
 - The syntax must match the real Todoist CLI. Check with read-only
   `td <cmd> --help`. Never run `td` commands that modify data.
-- Shell built-ins (`cls`, `help`, `mode`) live in `src/terminal/builtins.js` and
-  stay separate from td commands. Unknown input prints `Bad command or file name`.
+- Shell built-ins (`clear`, `help`, `expert on|off`) live in
+  `src/terminal/builtins.js` and stay separate from td commands. Unknown input
+  prints `I don't understand "<first word>". Type help for commands.`
 - Handlers return structured data (`{type: 'itemList' | 'message' | 'lines' |
   'clear' | 'setMode' | 'none', ...}`), never HTML. `render.js` turns results
   into DOM.
@@ -88,7 +98,7 @@ Future apps on this UI reuse the same look.
   - Body text uses VT323.
   - Output is white. Confirmations and empty states are cyan. Errors, headings,
     and priority marks are yellow.
-  - Echoed commands (`C:\TODO>td today`), the input prompt, typed text, and the
+  - Echoed commands (`>td today`), the input prompt (`>`), typed text, and the
     block cursor are cyan.
 - **Buttons:**
   - Buttons are gray raised bevels. The bevel inverts when pressed, and also
@@ -120,9 +130,10 @@ Future apps on this UI reuse the same look.
     ambiguous command ticks nothing.
   - Secondary info such as `id:` refs uses `--color-dim` (light gray). On
     phones the refs are shrunk so they don't squeeze the text column.
-- **Expert mode:** `mode expert` adds the `expert-mode` class to `#app`. CSS
+- **Expert mode:** `expert on` (the EXPERT button) adds the `expert-mode` class to `#app`. CSS
   then hides the button bar and the row checkboxes, and shows each row's `id:` ref
   instead. Because it's one class, rows already on screen switch too.
+  `expert off` brings the buttons back, and the expert-mode message says so.
 - **Output panel:** it scrolls, but its scrollbar is hidden in all browsers.
   The wheel, touch, keyboard (when focused), and PageUp/PageDown from the
   prompt all still scroll it, and new output always scrolls to the bottom.

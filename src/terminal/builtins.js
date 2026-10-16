@@ -13,9 +13,9 @@
 /** @type {Builtin[]} */
 export const builtins = [
   {
-    name: 'cls',
+    name: 'clear',
     summary: 'Clear the screen',
-    usage: 'cls',
+    usage: 'clear',
     handler: () => ({ type: 'clear' }),
   },
   {
@@ -34,13 +34,14 @@ export const builtins = [
     },
   },
   {
-    name: 'mode',
-    summary: 'Hide (expert) or show (normal) the buttons',
-    usage: 'mode expert|normal',
+    name: 'expert',
+    summary: 'Hide (on) or show (off) the buttons',
+    usage: 'expert on|off',
     handler: (args) => {
-      if (args[0] === 'expert') return { type: 'setMode', expert: true };
-      if (args[0] === 'normal') return { type: 'setMode', expert: false };
-      return { type: 'message', tone: 'error', text: 'Usage: mode expert|normal' };
+      const arg = args[0]?.toLowerCase();
+      if (arg === 'on') return { type: 'setMode', expert: true };
+      if (arg === 'off') return { type: 'setMode', expert: false };
+      return { type: 'message', tone: 'error', text: 'Usage: expert on|off' };
     },
   },
 ];

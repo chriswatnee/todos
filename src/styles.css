@@ -64,6 +64,7 @@ body {
   font-family: var(--font-dos);
   font-size: var(--font-size);
   line-height: 1.15;
+  font-variant-ligatures: none; /* VT323 joins "ff" (as in "off"); a terminal shows every cell */
 }
 
 /* ---- Frame and layout -------------------------------------------------- */

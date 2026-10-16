@@ -40,7 +40,7 @@ function setup() {
       app: document.getElementById('app'),
       buttonBar: document.getElementById('button-bar'),
     },
-    prompt: 'C:\\TODO>',
+    prompt: '>',
     commandSet: tdCommandSet,
     builtins,
     ctx: { api, knownTasks: [] },
