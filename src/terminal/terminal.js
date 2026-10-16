@@ -60,8 +60,10 @@ export function createTerminal({ elements, prompt, commandSet, builtins, ctx, bu
     busy = true;
     document.body.classList.add('is-busy');
 
-    append(renderEcho(prompt, line));
-    history.push(line);
+    // Secrets (e.g. a token) are masked in the echo and history; dispatch gets the real line.
+    const shown = commandSet.redact ? commandSet.redact(line) : line;
+    append(renderEcho(prompt, shown));
+    history.push(shown);
     setInput('');
 
     try {

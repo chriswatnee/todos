@@ -7,7 +7,7 @@ function makeEnv(api = {}) {
   return {
     commandSet: tdCommandSet,
     builtins,
-    ctx: { api, knownTasks: [], helpFooter: HELP_FOOTER },
+    ctx: { api: { hasToken: true, ...api }, knownTasks: [], helpFooter: HELP_FOOTER },
   };
 }
 
@@ -70,6 +70,23 @@ describe('dispatch: td', () => {
     expect(text).toContain('Commands:');
     expect(text).toContain('task complete <ref>');
     expect(text).toContain('The real td CLI has many more commands');
+  });
+
+  it('td --help lists auth', async () => {
+    const result = await dispatch('td --help', makeEnv());
+    expect(result.lines.join('\n')).toMatch(/auth <command>\s+Manage authentication/);
+  });
+
+  it.each(['td auth', 'td auth --help', 'td help auth'])('%s lists the auth subcommands', async (line) => {
+    const result = await dispatch(line, makeEnv());
+    expect(result.lines[0]).toBe('Usage: td auth [options] [command]');
+    const text = result.lines.join('\n');
+    for (const sub of ['login', 'logout', 'status', 'token <token>']) expect(text).toContain(sub);
+  });
+
+  it('td auth token --help shows usage for auth token', async () => {
+    const result = await dispatch('td auth token --help', makeEnv());
+    expect(result.lines[0]).toBe('Usage: td auth token "<token>"');
   });
 
   it('td add --help shows usage for add', async () => {

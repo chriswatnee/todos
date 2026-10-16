@@ -19,6 +19,43 @@ describe('todoist api client', () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
+  it('has no token unless one is passed in', () => {
+    expect(createTodoistApi({ fetchImpl: vi.fn() }).hasToken).toBe(false);
+  });
+
+  it('verifyToken calls /user with the candidate token and keeps only email and name', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(jsonResponse(200, { email: 'a@example.com', full_name: 'A', token: 'cand' }));
+    const api = createTodoistApi({ token: 'current', fetchImpl });
+    expect(await api.verifyToken('cand')).toEqual({ email: 'a@example.com', full_name: 'A' });
+    expect(fetchImpl.mock.calls[0][0]).toBe('https://api.todoist.com/api/v1/user');
+    expect(fetchImpl.mock.calls[0][1].headers.Authorization).toBe('Bearer cand');
+    // Verifying doesn't switch accounts.
+    await api.getUser();
+    expect(fetchImpl.mock.calls[1][1].headers.Authorization).toBe('Bearer current');
+  });
+
+  it('setToken switches the token and clears the cached inbox', async () => {
+    const projects = (id) => jsonResponse(200, { results: [{ id, inbox_project: true }], next_cursor: null });
+    const tasks = () => jsonResponse(200, { results: [], next_cursor: null });
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(projects('inbox-a'))
+      .mockResolvedValueOnce(tasks())
+      .mockResolvedValueOnce(projects('inbox-b'))
+      .mockResolvedValueOnce(tasks());
+    const api = createTodoistApi({ token: 'a', fetchImpl });
+    await api.getInboxTasks();
+    api.setToken('b');
+    await api.getInboxTasks();
+    expect(fetchImpl.mock.calls[2][1].headers.Authorization).toBe('Bearer b');
+    expect(new URL(fetchImpl.mock.calls[3][0]).searchParams.get('project_id')).toBe('inbox-b');
+
+    api.setToken('');
+    expect(api.hasToken).toBe(false);
+  });
+
   it('follows next_cursor for today tasks', async () => {
     const fetchImpl = vi
       .fn()

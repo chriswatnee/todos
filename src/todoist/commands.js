@@ -1,7 +1,10 @@
 // The `td` commands this app supports. Syntax mirrors the official Todoist CLI.
 // This is the single place where td commands are defined.
 
+import { ApiError } from './api.js';
 import { errorToResult } from './errors.js';
+import { saveToken, clearToken, notSignedIn, SIGN_IN_HINT } from './auth.js';
+import { tokenize } from '../terminal/tokenizer.js';
 
 /** @typedef {import('./api.js').Task} Task */
 /** @typedef {import('../terminal/types.js').Result} Result */
@@ -23,18 +26,19 @@ const commands = [
     name: 'today',
     summary: 'Show tasks due today and overdue',
     usage: 'td today',
-    handler: (_args, ctx) =>
+    handler: requireAuth((_args, ctx) =>
       withApiErrors(async () => {
         const tasks = sortForToday(await ctx.api.getTodayTasks());
         ctx.knownTasks = tasks;
         return taskList('Today', tasks, 'No tasks due today.');
       }),
+    ),
   },
   {
     name: 'inbox',
     summary: 'List tasks in Inbox',
     usage: 'td inbox',
-    handler: (_args, ctx) =>
+    handler: requireAuth((_args, ctx) =>
       withApiErrors(async () => {
         const tasks = (await ctx.api.getInboxTasks()).sort(
           (a, b) => (a.child_order ?? 0) - (b.child_order ?? 0),
@@ -42,12 +46,13 @@ const commands = [
         ctx.knownTasks = tasks;
         return taskList('Inbox', tasks, 'Inbox is empty.');
       }),
+    ),
   },
   {
     name: 'add',
     summary: 'Quick add task with natural language (e.g., "Buy milk tomorrow p1 #Shopping")',
     usage: 'td add "<text>"',
-    handler: (args, ctx) => {
+    handler: requireAuth((args, ctx) => {
       const text = args.join(' ').trim();
       if (!text) {
         return { type: 'message', tone: 'error', text: 'Usage: td add "<text>"' };
@@ -57,13 +62,13 @@ const commands = [
         const due = task.due ? ` (due: ${task.due.string || task.due.date})` : '';
         return { type: 'message', tone: 'success', text: `Added: ${task.content}${due}  id:${task.id}` };
       });
-    },
+    }),
   },
   {
     name: 'task complete',
     summary: 'Complete a task (ref: id:xxx or task name)',
     usage: 'td task complete <ref>',
-    handler: (args, ctx) =>
+    handler: requireAuth((args, ctx) =>
       withApiErrors(async () => {
         const ref = args.join(' ').trim();
         if (!ref) {
@@ -81,23 +86,168 @@ const commands = [
           checkedKey: resolved.id, // ticks this task's rows on screen
         };
       }),
+    ),
+  },
+  {
+    name: 'auth',
+    summary: 'Manage authentication',
+    usage: 'td auth <command>',
+    help: authHelp,
+    handler: (args) =>
+      args.length === 0 || HELP_WORDS.has(args[0])
+        ? authHelp()
+        : { type: 'message', tone: 'error', text: `Unknown command: td auth ${args[0]}. Type td auth --help for a list.` },
+  },
+  {
+    name: 'auth token',
+    summary: 'Save API token for authentication',
+    usage: 'td auth token "<token>"',
+    handler: async (args, ctx) => {
+      if (args[0]?.toLowerCase() === 'view') {
+        return { type: 'message', tone: 'error', text: "Printing the stored token isn't supported here." };
+      }
+      const candidate = args.length === 1 ? args[0].trim() : '';
+      if (!candidate) {
+        return { type: 'lines', tone: 'error', lines: ['Usage: td auth token "<token>"', SIGN_IN_HINT[0]] };
+      }
+
+      let user;
+      try {
+        user = await ctx.api.verifyToken(candidate);
+      } catch (err) {
+        if (err instanceof ApiError && (err.kind === 'auth' || err.kind === 'forbidden' || err.status === 400)) {
+          return { type: 'message', tone: 'error', text: 'Todoist rejected that token. Check it and try again.' };
+        }
+        return errorToResult(err);
+      }
+
+      ctx.api.setToken(candidate);
+      ctx.knownTasks = [];
+      const saved = saveToken(candidate);
+      return {
+        type: 'message',
+        tone: 'success',
+        text: saved
+          ? `Signed in as ${user.email}. Token saved in this browser.`
+          : `Signed in as ${user.email} until you close this page. This browser wouldn't let me save the token.`,
+      };
+    },
+  },
+  {
+    name: 'auth status',
+    summary: 'Show current authentication status',
+    usage: 'td auth status',
+    handler: requireAuth(async (_args, ctx) => {
+      try {
+        const user = await ctx.api.getUser();
+        return { type: 'message', tone: 'success', text: `Signed in as ${user.email}.` };
+      } catch (err) {
+        if (err instanceof ApiError && err.kind === 'auth') {
+          return {
+            type: 'message',
+            tone: 'error',
+            text: 'The saved token was rejected. Run td auth token "<token>" or td auth logout.',
+          };
+        }
+        return errorToResult(err);
+      }
+    }),
+  },
+  {
+    name: 'auth logout',
+    summary: 'Remove the saved authentication token',
+    usage: 'td auth logout',
+    handler: requireAuth((_args, ctx) => {
+      clearToken();
+      ctx.api.setToken('');
+      ctx.knownTasks = [];
+      return { type: 'message', tone: 'success', text: 'Signed out. Token removed from this browser.' };
+    }),
+  },
+  {
+    name: 'auth login',
+    summary: 'Authenticate with Todoist in the browser (not available yet)',
+    usage: 'td auth login',
+    handler: () => ({
+      type: 'lines',
+      tone: 'error',
+      lines: [
+        "Browser login isn't available yet. Use td auth token instead.",
+        ...SIGN_IN_HINT,
+      ],
+    }),
   },
 ];
+
+const HELP_WORDS = new Set(['--help', '-h', 'help']);
+
+/** @param {string} name */
+const byName = (name) => commands.find((c) => c.name === name);
 
 /** @type {CommandSet} */
 export const tdCommandSet = {
   prefix: 'td',
   commands,
   help: () => ({ type: 'lines', lines: helpLines() }),
+  redact,
 };
+
+/**
+ * Hide the token in `td auth token "<token>"` so it never shows in the echoed
+ * command or in history. Everything else passes through unchanged.
+ * @param {string} line
+ * @returns {string}
+ */
+export function redact(line) {
+  const [td, auth, token, arg] = tokenize(line).map((t, i) => (i < 3 ? t.toLowerCase() : t));
+  const isTokenCommand = td === 'td' && auth === 'auth' && token === 'token';
+  if (!isTokenCommand || arg === undefined || HELP_WORDS.has(arg) || arg.toLowerCase() === 'view') {
+    return line;
+  }
+  return 'td auth token "********"';
+}
+
+/**
+ * Wrap a handler so it answers "Not signed in." (with how to sign in) when
+ * there's no token, before any usage check or API call.
+ */
+function requireAuth(handler) {
+  return (args, ctx) => (ctx.api.hasToken ? handler(args, ctx) : notSignedIn());
+}
+
+/** `td auth --help`, in the real CLI's format. */
+function authHelp() {
+  const rows = [
+    ['login', byName('auth login').summary],
+    ['logout', byName('auth logout').summary],
+    ['status', byName('auth status').summary],
+    ['token <token>', byName('auth token').summary],
+    ['help [command]', 'display help for command'],
+  ];
+  return {
+    type: 'lines',
+    lines: [
+      'Usage: td auth [options] [command]',
+      '',
+      'Manage authentication',
+      '',
+      'Options:',
+      `  ${'-h, --help'.padEnd(25)}display help for command`,
+      '',
+      'Commands:',
+      ...rows.map(([name, summary]) => `  ${name.padEnd(25)}${summary}`),
+    ],
+  };
+}
 
 /** Help in the real CLI's format, listing only what this app supports. */
 function helpLines() {
   const rows = [
-    ['today', commands[0].summary],
-    ['inbox', commands[1].summary],
-    ['add <text>', commands[2].summary],
-    ['task complete <ref>', commands[3].summary],
+    ['today', byName('today').summary],
+    ['inbox', byName('inbox').summary],
+    ['add <text>', byName('add').summary],
+    ['task complete <ref>', byName('task complete').summary],
+    ['auth <command>', byName('auth').summary],
     ['help [command]', 'display help for command'],
   ];
   return [

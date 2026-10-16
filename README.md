@@ -8,28 +8,41 @@ Todoist CLI (`td`).
 Clicking a button types the equivalent `td` command into the prompt, one
 character at a time, and then runs it, so you learn the commands by watching.
 
-> **Local-only prototype. Do not deploy it publicly.**
-> The Todoist API token is read through `import.meta.env`, so Vite puts it
-> into the JavaScript sent to the browser. Anyone who can load the page can read
-> your token. That's also why there is no `build` script: a production build
-> would write the token into the files in `dist/`.
+> **Unofficial client.** Todos is not affiliated with, endorsed by, or
+> supported by Doist, the makers of Todoist.
+
+## Signing in
+
+Each person signs in with their own Todoist API token, the same way as the real
+`td` CLI:
+
+1. In Todoist, open Settings → Integrations → Developer and copy your API token.
+2. At the prompt, type:
+
+   ```
+   td auth token "<your token>"
+   ```
+
+   The app checks the token with a read-only call to Todoist and saves it only if
+   Todoist accepts it. The token is masked in the echoed command and in history
+   (`td auth token "********"`).
+
+`td auth status` shows which account you're signed in as. `td auth logout`
+removes the token. `td auth login` (browser sign-in) isn't available yet.
+
+**Where the token is stored:** in your browser's `localStorage`, for this site
+only. It's never part of the app's files and is only ever sent to
+`api.todoist.com`. Anyone with access to your browser profile can read it, so
+run `td auth logout` on shared computers. You can also revoke the token at any
+time in Todoist.
 
 ## Setup
 
 Requirements: Node 20+ and npm.
 
-1. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-2. Provide your Todoist API token as the environment variable
-   `VITE_TODOIST_TOKEN`. You can find the token in Todoist under
-   Settings → Integrations → Developer. Set it in your shell or tool
-   environment (for example, Claude Desktop's local environment editor). Don't
-   put it in a committed file. `.env*.local` files are git-ignored if you must
-   use one.
+```bash
+npm install
+```
 
 ## Running
 
@@ -53,6 +66,10 @@ Runs the Vitest unit tests.
 | `td inbox` | Tasks in the Inbox |
 | `td add "<text>"` | Quick add with natural language, e.g. `td add "Buy milk tomorrow p1 #Shopping"` |
 | `td task complete <ref>` | Complete a task. `<ref>` is `id:xxx` or a task name (case-insensitive; ambiguous names are refused) |
+| `td auth token "<token>"` | Check and save your Todoist API token |
+| `td auth status` | Show whether you're signed in, and as whom |
+| `td auth logout` | Remove the saved token |
+| `td auth login` | Browser sign-in (not available yet; use `td auth token`) |
 | `td --help` | The td commands this app supports |
 | `help` | Built-in shell commands |
 | `clear` | Clear the screen |
@@ -60,3 +77,28 @@ Runs the Vitest unit tests.
 
 Up and Down arrows cycle through command history. Pressing any key or clicking
 during a button's typing animation skips to the end of the animation.
+
+## Hosting
+
+The app is a static site with no server and no secrets of its own, so it's safe
+to host publicly.
+
+```bash
+npm run build
+```
+
+This writes `dist/`. Deploy that folder to any static host. `npm run preview`
+serves the built files locally.
+
+Two safeguards run with every build:
+
+- **Leak check** (`scripts/check-dist.js`, run automatically as `postbuild`).
+  The build fails if any file in `dist/` contains `VITE_TODOIST_TOKEN` or
+  anything shaped like a Todoist token (40 hex characters).
+- **Content Security Policy.** The built `index.html` carries a strict CSP
+  `<meta>` tag. It allows only the app's own files, `api.todoist.com`, and Google
+  Fonts. The dev server doesn't get the policy, so hot reload keeps working.
+
+If your host lets you set response headers, also send the same policy (see `CSP`
+in `vite.config.js`) as a `Content-Security-Policy` header, with
+`frame-ancestors 'none'` added. A `<meta>` tag can't set `frame-ancestors`.

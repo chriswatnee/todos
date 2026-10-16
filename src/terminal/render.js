@@ -35,7 +35,7 @@ export function renderResult(result, { onAction }) {
       return el('div', `line tone-${result.tone || 'info'}`, result.text);
 
     case 'lines': {
-      const block = el('div', 'lines');
+      const block = el('div', result.tone ? `lines tone-${result.tone}` : 'lines');
       for (const text of result.lines) block.append(el('div', 'line', text));
       return block;
     }

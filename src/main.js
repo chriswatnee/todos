@@ -5,14 +5,16 @@ import './styles.css';
 import { APP_NAME, PROMPT } from './config.js';
 import { createTerminal } from './terminal/terminal.js';
 import { builtins } from './terminal/builtins.js';
-import { createTodoistApi, ApiError } from './todoist/api.js';
+import { createTodoistApi } from './todoist/api.js';
 import { tdCommandSet, HELP_FOOTER } from './todoist/commands.js';
 import { tdButtons } from './todoist/buttons.js';
-import { errorToResult } from './todoist/errors.js';
+import { loadToken, notSignedIn } from './todoist/auth.js';
 
 document.title = APP_NAME;
 
-const api = createTodoistApi();
+// Each visitor signs in with their own token (td auth token); it lives in this
+// browser's localStorage. Nothing comes from the build environment.
+const api = createTodoistApi({ token: loadToken() });
 
 const terminal = createTerminal({
   elements: {
@@ -36,5 +38,5 @@ terminal.print({
 });
 
 if (!api.hasToken) {
-  terminal.print(errorToResult(new ApiError('missing-token', '')));
+  terminal.print(notSignedIn());
 }

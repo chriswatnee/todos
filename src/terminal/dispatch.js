@@ -88,5 +88,6 @@ async function runFromSet(commandSet, words, ctx) {
 
 /** @param {import('./types.js').Command} command */
 function commandHelp(command) {
+  if (command.help) return command.help();
   return { type: 'lines', lines: [`Usage: ${command.usage}`, '', command.summary] };
 }

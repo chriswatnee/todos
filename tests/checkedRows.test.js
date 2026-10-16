@@ -26,6 +26,7 @@ function setup() {
   window.matchMedia = () => ({ matches: true });
 
   const api = {
+    hasToken: true,
     // The same task appears in both listings, like a task due today in the Inbox.
     getTodayTasks: vi.fn().mockResolvedValue([WATER]),
     getInboxTasks: vi.fn().mockResolvedValue([WATER, RENT]),

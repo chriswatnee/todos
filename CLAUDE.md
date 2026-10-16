@@ -29,8 +29,10 @@ use Vitest. Favor clear, plain code over cleverness.
 src/config.js       app name, prompt
 src/main.js         composition root: the ONLY file that imports both terminal/ and todoist/
 src/terminal/       generic UI: tokenizer, dispatch, built-ins, history, renderer, terminal, types
-src/todoist/        backend: api.js (fetch client), commands.js (td command table), errors.js, buttons.js
-tests/              Vitest tests, including boundary.test.js
+src/todoist/        backend: api.js (fetch client), auth.js (token storage, sign-in hint),
+                    commands.js (td command table), errors.js, buttons.js
+scripts/check-dist.js  post-build leak check (fails the build on token-like content in dist/)
+tests/              Vitest tests, including boundary.test.js and security.test.js
 ```
 - `src/terminal/` must never import from `src/todoist/`. `tests/boundary.test.js`
   enforces this. The terminal only knows the plain shapes in
@@ -51,6 +53,16 @@ tests/              Vitest tests, including boundary.test.js
   into DOM.
 - `td task complete <name>` never guesses. If a name is ambiguous, list the
   matches with their `id:` refs.
+- Auth mirrors `td auth`: `td auth token "<token>"` (verified with `GET /user`
+  before saving), `td auth status`, `td auth logout`, and `td auth login` (which
+  only points to `td auth token` for now). With no token, every other td command
+  returns `notSignedIn()` from `src/todoist/auth.js` before any usage check or
+  API call. Help still works.
+- A command set can define `redact(line)`. The terminal uses it for the echoed
+  command and history, never for dispatch. The td set masks
+  `td auth token "********"`.
+- A command can define `help()` for its own `--help` output (e.g. `td auth`).
+  Otherwise its help is its usage plus summary.
 
 ## Buttons and animation
 - Buttons and task-row checkboxes never call handlers directly. They send a
@@ -70,6 +82,8 @@ tests/              Vitest tests, including boundary.test.js
 - Base URL `https://api.todoist.com/api/v1`, Bearer token, called with
   `fetch()` (no SDK).
 - Endpoints:
+  - `GET /user` (verify a token; keep only `email` and `full_name`, because the
+    response also echoes the token)
   - `GET /tasks/filter?query=today | overdue`
   - `GET /projects` (find the project with `inbox_project === true`)
   - `GET /tasks?project_id=`
@@ -142,11 +156,22 @@ Future apps on this UI reuse the same look.
   prompt all still scroll it, and new output always scrolls to the bottom.
 
 ## Security
-- Read the token only via `import.meta.env.VITE_TODOIST_TOKEN`, in
-  `src/todoist/api.js`.
-- Never write the token to a file, never log it, and never create `.env` files
-  containing it.
-- Don't add a build/deploy step. A build would embed the token in `dist/`.
+- The app is meant to be hosted publicly. Each user supplies their own token
+  with `td auth token`. It's stored in localStorage (key `todos:todoist-token`)
+  only through `src/todoist/auth.js`, which wraps every storage access in
+  try/catch. `main.js` passes it to `createTodoistApi()`, and `api.setToken()`
+  swaps it.
+- Never read a token from the build environment. Nothing in `src/` may
+  reference `import.meta.env` (`tests/security.test.js` enforces this), so Vite
+  never inlines one.
+- Never log the token, never show it (the echo and history are masked via
+  `redact`), and never write it to a file or `.env`.
+- `npm run build` runs `scripts/check-dist.js` as `postbuild`. It fails the build
+  if `dist/` contains `VITE_TODOIST_TOKEN` or a 40-hex-character string.
+- The production build gets a strict CSP `<meta>` from `cspPlugin()` in
+  `vite.config.js` (`apply: 'build'`, so the dev server is untouched). It allows
+  `'self'`, `https://api.todoist.com` (connect), and Google Fonts (style/font). If
+  you add a host, add it there and say why.
 - Task names are untrusted. Render with `textContent` / `createElement` only,
   never `innerHTML`.
 
@@ -158,7 +183,9 @@ Future apps on this UI reuse the same look.
 
 ## Verification
 - `npm test` must pass.
+- `npm run build` must pass, including the leak check.
 - To try it, run `npm run dev` (or the `dev` entry in `.claude/launch.json`).
-  Read-only commands (`td today`, `td inbox`) are fine against the real
-  account. Don't add or complete real tasks while verifying; the user tests
-  those.
+  To check the built app and its CSP, use the `preview` entry after a build.
+  Never use the user's real token. Test sign-in rejection with an obviously
+  fake token. Read-only commands are fine if the user has signed in themselves.
+  Don't add or complete real tasks while verifying; the user tests those.

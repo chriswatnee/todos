@@ -23,7 +23,7 @@
  * @typedef {(
  *   { type: 'itemList', title: string, items: ListItem[], emptyText: string } |
  *   { type: 'message', text: string, tone?: 'info' | 'success' | 'error', checkedKey?: string } |
- *   { type: 'lines', lines: string[] } |
+ *   { type: 'lines', lines: string[], tone?: 'info' | 'success' | 'error' } |
  *   { type: 'clear' } |
  *   { type: 'setMode', expert: boolean } |
  *   { type: 'none' }
@@ -37,6 +37,8 @@
  * @property {string} summary  one-line description for help
  * @property {string} usage    e.g. 'td add "<text>"'
  * @property {(args: string[], ctx: any) => Result | Promise<Result>} handler
+ * @property {() => Result} [help]  full help for `<prefix> <name> --help`; defaults to
+ *   usage + summary
  */
 
 /**
@@ -45,6 +47,8 @@
  * @property {string} prefix
  * @property {Command[]} commands
  * @property {(ctx: any) => Result} help  result for `<prefix>`, `<prefix> --help`, `<prefix> help`
+ * @property {(line: string) => string} [redact]  returns the line with secrets masked
+ *   (e.g. a token). Used for the echoed command and history, never for dispatch.
  */
 
 /**

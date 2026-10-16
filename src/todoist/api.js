@@ -1,7 +1,8 @@
 // Minimal Todoist API v1 client using fetch(). No SDK.
 // Endpoints checked against https://developer.todoist.com/api/v1/ (OpenAPI spec).
 //
-// The token is read here and nowhere else. Never log it.
+// The token is passed in by main.js (from src/todoist/auth.js) and swapped by
+// setToken(). It is never read from the build environment. Never log it.
 
 const BASE_URL = 'https://api.todoist.com/api/v1';
 const PAGE_LIMIT = 200; // API maximum for paginated task/project lists
@@ -36,23 +37,28 @@ export class ApiError extends Error {
   }
 }
 
-/** Read the token from Vite's environment. */
-export function readTokenFromEnv() {
-  return import.meta.env?.VITE_TODOIST_TOKEN || '';
-}
+/**
+ * The signed-in user (only the fields this app uses; the API response also
+ * echoes the token, which is deliberately dropped).
+ * @typedef {Object} User
+ * @property {string} email
+ * @property {string} full_name
+ */
 
 /**
  * @param {{ token?: string, fetchImpl?: typeof fetch }} [options]
  */
-export function createTodoistApi({ token = readTokenFromEnv(), fetchImpl = (...a) => fetch(...a) } = {}) {
+export function createTodoistApi({ token = '', fetchImpl = (...a) => fetch(...a) } = {}) {
   let inboxProjectId = null;
 
   /**
    * @param {string} path      e.g. "/tasks"
-   * @param {{ method?: string, query?: Record<string, string>, body?: any }} [opts]
+   * @param {{ method?: string, query?: Record<string, string>, body?: any, token?: string }} [opts]
+   *   opts.token overrides the current token (used to verify a new one)
    */
-  async function request(path, { method = 'GET', query, body } = {}) {
-    if (!token) {
+  async function request(path, { method = 'GET', query, body, token: tokenOverride } = {}) {
+    const bearer = tokenOverride ?? token;
+    if (!bearer) {
       throw new ApiError('missing-token', 'No API token configured');
     }
 
@@ -63,7 +69,7 @@ export function createTodoistApi({ token = readTokenFromEnv(), fetchImpl = (...a
       }
     }
 
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = { Authorization: `Bearer ${bearer}` };
     if (body !== undefined) headers['Content-Type'] = 'application/json';
 
     let response;
@@ -98,8 +104,32 @@ export function createTodoistApi({ token = readTokenFromEnv(), fetchImpl = (...a
     return results;
   }
 
+  /** @returns {Promise<User>} */
+  async function getUserWith(bearer) {
+    const user = await request('/user', { token: bearer });
+    return { email: user.email, full_name: user.full_name };
+  }
+
   return {
-    hasToken: Boolean(token),
+    get hasToken() {
+      return Boolean(token);
+    },
+
+    /** Switch accounts (or sign out with ''). Clears anything cached for the old one. */
+    setToken(newToken) {
+      token = newToken;
+      inboxProjectId = null;
+    },
+
+    /** Check a candidate token with a read-only call, without keeping it. @returns {Promise<User>} */
+    verifyToken(candidate) {
+      return getUserWith(candidate);
+    },
+
+    /** The signed-in user. @returns {Promise<User>} */
+    getUser() {
+      return getUserWith(token);
+    },
 
     /** Tasks due today plus overdue. @returns {Promise<Task[]>} */
     getTodayTasks() {

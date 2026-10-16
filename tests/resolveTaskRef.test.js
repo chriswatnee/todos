@@ -14,6 +14,7 @@ const TASKS = [
 
 function mockApi() {
   return {
+    hasToken: true,
     getTodayTasks: vi.fn().mockResolvedValue([]),
     getInboxTasks: vi.fn().mockResolvedValue([]),
     closeTask: vi.fn().mockResolvedValue(undefined),
