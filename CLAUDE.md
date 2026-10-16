@@ -19,8 +19,8 @@ use Vitest. Favor clear, plain code over cleverness.
   `src/config.js` (`APP_NAME`). The title bar, `<title>` (via the
   `%APP_NAME%` plugin in `vite.config.js`), and banner all read it from there.
   The identifier form (`APP_ID`, package name) is `todos`.
-- The GitHub repository and project folder are still named `retro-todolist`.
-  That's intentional; don't rename them or "fix" references to them.
+- The GitHub repository (`chriswatnee/todos`) and project folder are also
+  named `todos`. The old name `retro-todolist` is retired.
 - Use "Todoist" only where it really means the Todoist service: `src/todoist/`,
   td commands, and API error messages.
 
@@ -189,3 +189,8 @@ Future apps on this UI reuse the same look.
   Never use the user's real token. Test sign-in rejection with an obviously
   fake token. Read-only commands are fine if the user has signed in themselves.
   Don't add or complete real tasks while verifying; the user tests those.
+
+## Git
+- Temporary files such as commit messages go in a scratchpad outside the
+  project, and are deleted after use.
+- Check `git status` before staging.
