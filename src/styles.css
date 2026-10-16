@@ -80,8 +80,7 @@ body {
   border: var(--frame) solid var(--color-frame);
 }
 
-/* Raised gray bevel, used by the title bar and buttons */
-.titlebar,
+/* Raised gray bevel, used by the buttons */
 .btn {
   background: var(--color-chrome);
   color: var(--color-chrome-text);
@@ -90,11 +89,15 @@ body {
     var(--color-bevel-light);
 }
 
+/* Flat gray bar (no bevel, so it doesn't read as a button). The padding
+   includes the old bevel width, so the bar keeps its size. */
 .titlebar {
   display: flex;
   align-items: center;
   justify-content: space-between; /* right side reserved for a future username */
-  padding: 10px 16px;
+  padding: calc(10px + var(--bevel)) calc(16px + var(--bevel));
+  background: var(--color-chrome);
+  color: var(--color-chrome-text);
 }
 
 .titlebar-text {
@@ -149,6 +152,12 @@ body {
 .prompt,
 .echo-text {
   color: var(--color-echo);
+}
+
+/* The prompt is "> " (config.js). Keep its trailing space, which a flex item
+   would otherwise drop on the input line. */
+.prompt {
+  white-space: pre;
 }
 
 .tone-info {
@@ -273,15 +282,11 @@ body {
   cursor: default;
 }
 
-/* A completed row fades back; the text is also struck through. */
+/* A completed row fades back; "[X]" and the dimmed text mark it as done. */
 .item.is-done .item-mark,
 .item.is-done .item-text,
 .item.is-done .item-detail {
   color: var(--color-dim);
-}
-
-.item.is-done .item-text {
-  text-decoration: line-through;
 }
 
 .expert-mode .item-action {
@@ -425,7 +430,7 @@ body {
   }
 
   .titlebar {
-    padding: 8px 10px;
+    padding: calc(8px + var(--bevel)) calc(10px + var(--bevel));
   }
 
   .screen {

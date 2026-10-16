@@ -16,7 +16,7 @@ function el(tag, className, text) {
   return node;
 }
 
-/** The echoed command line, e.g. `>td today`. */
+/** The echoed command line, e.g. `> td today`. */
 export function renderEcho(prompt, line) {
   const row = el('div', 'line echo');
   row.append(el('span', 'prompt', prompt), el('span', 'echo-text', line));

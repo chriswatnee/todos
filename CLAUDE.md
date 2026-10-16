@@ -7,11 +7,11 @@ use Vitest. Favor clear, plain code over cleverness.
 
 ## Design direction
 - The shell is a classic adventure-game text parser (Infocom/Sierra style),
-  not a DOS prompt. The prompt is a bare `>`, built-ins are plain words
+  not a DOS prompt. The prompt is `> ` (a `>` and one space), built-ins are plain words
   (`clear`, `help`, `expert on|off`), and messages talk like a parser
   (`I don't understand "xyzzy". Type help for commands.`). Avoid DOS-isms
   such as `C:\` prompts, `cls`, or "Bad command or file name".
-- The EGA palette and beveled frame stay. The td commands themselves never
+- The EGA palette, cyan frame, and beveled buttons stay. The td commands themselves never
   change; they mirror the real CLI.
 
 ## Naming
@@ -89,8 +89,8 @@ Future apps on this UI reuse the same look.
   add a color, add an EGA base token, then a role that points to it.
 - **Frame:**
   - The page is black, with a bright cyan border around the whole app.
-  - The title bar is a gray raised bevel (white top/left, dark gray
-    bottom/right). The title is left-aligned in Press Start 2P, a bold pixel
+  - The title bar is a flat gray bar with no bevel, so it doesn't look like a
+    button. The title is left-aligned in Press Start 2P, a bold pixel
     font. The right side is reserved, e.g. for a username later.
   - The output panel is blue, with a cyan border and a thin black inner gap.
   - "CHOOSE AN ACTION:" (yellow) and the buttons sit directly on black.
@@ -98,8 +98,9 @@ Future apps on this UI reuse the same look.
   - Body text uses VT323.
   - Output is white. Confirmations and empty states are cyan. Errors, headings,
     and priority marks are yellow.
-  - Echoed commands (`>td today`), the input prompt (`>`), typed text, and the
-    block cursor are cyan.
+  - Echoed commands (`> td today`), the input prompt (`> `), typed text, and
+    the block cursor are cyan. The `>` is plain VT323 (no shadow, no other
+    font); the space after it is what makes it read clearly.
 - **Buttons:**
   - Buttons are gray raised bevels. The bevel inverts when pressed, and also
     while a button's command is typing (`.pressed`).
@@ -125,7 +126,7 @@ Future apps on this UI reuse the same look.
     the terminal calls `markItemsChecked()` for every on-screen row whose
     `key` matches. This works whether the command was typed by id, typed by
     name, or clicked.
-  - A ticked row shows `[X]` in cyan, its text dims and is struck through,
+  - A ticked row shows `[X]` in cyan, its text dims (no strikethrough),
     and the box becomes disabled. There is no uncomplete yet. A failed or
     ambiguous command ticks nothing.
   - Secondary info such as `id:` refs uses `--color-dim` (light gray). On
