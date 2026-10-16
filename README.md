@@ -1,4 +1,4 @@
-# Retro Todolist
+# Todos
 
 A to-do list client that looks like a late-80s adventure game: EGA colors,
 beveled gray buttons, and a `>` parser prompt. The current backend is

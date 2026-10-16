@@ -1,4 +1,4 @@
-# Retro Todolist: conventions
+# Todos: conventions
 
 A to-do client styled like a classic late-80s adventure game. Today the backend is Todoist (API v1),
 driven by commands that mirror the official `td` CLI. Vite + vanilla JS (ES
@@ -15,10 +15,12 @@ use Vitest. Favor clear, plain code over cleverness.
   change; they mirror the real CLI.
 
 ## Naming
-- The app is **Retro Todolist**. The display name is defined once, in
+- The app is **Todos**. The display name is defined once, in
   `src/config.js` (`APP_NAME`). The title bar, `<title>` (via the
   `%APP_NAME%` plugin in `vite.config.js`), and banner all read it from there.
-  The identifier form is `retro-todolist`.
+  The identifier form (`APP_ID`, package name) is `todos`.
+- The GitHub repository and project folder are still named `retro-todolist`.
+  That's intentional; don't rename them or "fix" references to them.
 - Use "Todoist" only where it really means the Todoist service: `src/todoist/`,
   td commands, and API error messages.
 
