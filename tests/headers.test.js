@@ -28,6 +28,14 @@ describe('public/_headers', () => {
     expect(scriptSrc).toBe("script-src 'self'");
   });
 
+  // Cloudflare Web Analytics doesn't inject its beacon into no-transform responses.
+  it('marks the HTML page no-transform', () => {
+    const lines = headersFile.split('\n');
+    const rule = lines.indexOf('/');
+    expect(rule).toBeGreaterThan(-1);
+    expect(lines[rule + 1].trim()).toMatch(/^Cache-Control: .*\bno-transform\b/);
+  });
+
   it('sends nosniff and the referrer policy', () => {
     expect(header('X-Content-Type-Options')).toBe('nosniff');
     expect(header('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
