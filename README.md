@@ -38,7 +38,7 @@ time in Todoist.
 
 ## Setup
 
-Requirements: Node 20+ and npm.
+Requirements: Node 24 (pinned in `.nvmrc`) and npm.
 
 ```bash
 npm install
@@ -99,6 +99,39 @@ Two safeguards run with every build:
   `<meta>` tag. It allows only the app's own files, `api.todoist.com`, and Google
   Fonts. The dev server doesn't get the policy, so hot reload keeps working.
 
-If your host lets you set response headers, also send the same policy (see `CSP`
-in `vite.config.js`) as a `Content-Security-Policy` header, with
-`frame-ancestors 'none'` added. A `<meta>` tag can't set `frame-ancestors`.
+## Deploying to Cloudflare
+
+The app deploys to Cloudflare Workers as a static-assets-only Worker (no Worker
+script). `wrangler.jsonc` points Cloudflare at `dist/`. Connect the GitHub repo
+in the Cloudflare dashboard (Workers & Pages → Create application → import the
+repository) and use:
+
+| Setting | Value |
+|---|---|
+| Project (Worker) name | `todos`. It must match `name` in `wrangler.jsonc` |
+| Production branch | `main` |
+| Build command | `npm run build` |
+| Deploy command | `npx wrangler deploy` (the default) |
+| Root directory | leave empty (repo root) |
+| Node version | from `.nvmrc` (24.18.0); no `NODE_VERSION` variable needed |
+| Build variables | none. Never add a Todoist token |
+
+Cloudflare installs dependencies with npm (from `package-lock.json`), runs the
+build (including the leak check, so a leak fails the deploy), then uploads
+`dist/`.
+
+**Response headers.** `public/_headers` is copied into `dist/`, and Cloudflare
+sends its headers on every response (it doesn't serve the file itself):
+
+- `Content-Security-Policy`: the same policy as the `<meta>` tag (`CSP` in
+  `vite.config.js`) plus `frame-ancestors 'none'`, which a `<meta>` tag can't
+  set. `tests/headers.test.js` fails if the two drift apart, so change the
+  policy in both places.
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+
+To check a build locally with Cloudflare's own server (headers included), run
+`npm run build` and then `npx wrangler dev`.
+
+Other static hosts work too: deploy `dist/` and send the same headers with
+that host's own mechanism.

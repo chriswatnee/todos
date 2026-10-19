@@ -172,6 +172,10 @@ Future apps on this UI reuse the same look.
   `vite.config.js` (`apply: 'build'`, so the dev server is untouched). It allows
   `'self'`, `https://api.todoist.com` (connect), and Google Fonts (style/font). If
   you add a host, add it there and say why.
+- Deployment is Cloudflare Workers static assets (`wrangler.jsonc`, Node from
+  `.nvmrc`). `public/_headers` sends the same CSP as a header plus
+  `frame-ancestors 'none'`, `nosniff`, and the referrer policy. A CSP change
+  goes in both places; `tests/headers.test.js` enforces this.
 - Task names are untrusted. Render with `textContent` / `createElement` only,
   never `innerHTML`.
 

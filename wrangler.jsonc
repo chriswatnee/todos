@@ -1,0 +1,10 @@
+// Cloudflare Workers with static assets. There is no Worker script: Cloudflare
+// serves dist/ as-is, with the headers in public/_headers (copied to dist/).
+// The Worker name in the Cloudflare dashboard must match "name".
+{
+  "name": "todos",
+  "compatibility_date": "2026-10-19",
+  "assets": {
+    "directory": "./dist/"
+  }
+}
