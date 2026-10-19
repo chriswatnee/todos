@@ -14,6 +14,7 @@
   "devDependencies": {
     "happy-dom": "^21.0.1",
     "vite": "^7.1.0",
-    "vitest": "^5.0.4"
+    "vitest": "^5.0.4",
+    "wrangler": "4.151.2"
   }
 }

@@ -111,14 +111,20 @@ repository) and use:
 | Project (Worker) name | `todos`. It must match `name` in `wrangler.jsonc` |
 | Production branch | `main` |
 | Build command | `npm run build` |
-| Deploy command | `npx wrangler deploy` (the default) |
+| Deploy command | `npx wrangler deploy` (the default; it runs the Wrangler version pinned in `package.json`) |
 | Root directory | leave empty (repo root) |
 | Node version | from `.nvmrc` (24.18.0); no `NODE_VERSION` variable needed |
 | Build variables | none. Never add a Todoist token |
 
 Cloudflare installs dependencies with npm (from `package-lock.json`), runs the
 build (including the leak check, so a leak fails the deploy), then uploads
-`dist/`.
+`dist/`. Wrangler is a pinned devDependency, so `npx wrangler` uses that exact
+version rather than downloading the latest.
+
+`wrangler.jsonc` defines no routes or custom domains. Add the custom domain in
+the dashboard (the Worker's Settings → Domains & Routes). Keep `route` and
+`routes` out of `wrangler.jsonc`: Wrangler replaces dashboard routes with the
+config's routes on every deploy.
 
 **Response headers.** `public/_headers` is copied into `dist/`, and Cloudflare
 sends its headers on every response (it doesn't serve the file itself):
