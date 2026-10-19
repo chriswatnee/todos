@@ -22,6 +22,12 @@ describe('public/_headers', () => {
     expect(header('Content-Security-Policy')).toBe(`${CSP}; frame-ancestors 'none'`);
   });
 
+  // The token is in localStorage, so no third-party script may run on the page.
+  it('allows scripts only from our own origin', () => {
+    const scriptSrc = CSP.split(';').map((d) => d.trim()).find((d) => d.startsWith('script-src '));
+    expect(scriptSrc).toBe("script-src 'self'");
+  });
+
   it('sends nosniff and the referrer policy', () => {
     expect(header('X-Content-Type-Options')).toBe('nosniff');
     expect(header('Referrer-Policy')).toBe('strict-origin-when-cross-origin');

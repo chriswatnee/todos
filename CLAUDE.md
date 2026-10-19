@@ -172,6 +172,12 @@ Future apps on this UI reuse the same look.
   `vite.config.js` (`apply: 'build'`, so the dev server is untouched). It allows
   `'self'`, `https://api.todoist.com` (connect), and Google Fonts (style/font). If
   you add a host, add it there and say why.
+- `script-src` stays `'self'`. Never allow a third-party script host (analytics,
+  tag managers, CDNs). The token is in localStorage, so any script on the page
+  can read it and send it anywhere. For this reason Cloudflare Web Analytics
+  injection stays off for todos.chriswatnee.com. If its beacon ever shows up as
+  a CSP error, turn the injection off in the dashboard; don't widen the CSP.
+  `tests/headers.test.js` checks that `script-src` is exactly `'self'`.
 - Deployment is Cloudflare Workers static assets (`wrangler.jsonc`, Node from
   `.nvmrc`). `public/_headers` sends the same CSP as a header plus
   `frame-ancestors 'none'`, `nosniff`, and the referrer policy. A CSP change
