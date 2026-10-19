@@ -2,7 +2,7 @@
 // Todoist backend. Swapping the backend means changing the imports here.
 
 import './styles.css';
-import { APP_NAME, PROMPT } from './config.js';
+import { APP_NAME, APP_VERSION, PROMPT } from './config.js';
 import { createTerminal } from './terminal/terminal.js';
 import { builtins } from './terminal/builtins.js';
 import { createTodoistApi } from './todoist/api.js';
@@ -34,7 +34,7 @@ const terminal = createTerminal({
 
 terminal.print({
   type: 'lines',
-  lines: [`${APP_NAME.toUpperCase()} v0.1`, 'Type help for commands, or td --help for Todoist commands.', ''],
+  lines: [`${APP_NAME.toUpperCase()} v${APP_VERSION}`, 'Type help for commands, or td --help for Todoist commands.', ''],
 });
 
 if (!api.hasToken) {

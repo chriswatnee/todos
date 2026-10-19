@@ -124,7 +124,9 @@ version rather than downloading the latest.
 `wrangler.jsonc` defines no routes or custom domains. Add the custom domain in
 the dashboard (the Worker's Settings → Domains & Routes). Keep `route` and
 `routes` out of `wrangler.jsonc`: Wrangler replaces dashboard routes with the
-config's routes on every deploy.
+config's routes on every deploy. `"workers_dev": false` turns off the
+`workers.dev` address, so the app is served only at
+https://todos.chriswatnee.com.
 
 **Response headers.** `public/_headers` is copied into `dist/`, and Cloudflare
 sends its headers on every response (it doesn't serve the file itself):

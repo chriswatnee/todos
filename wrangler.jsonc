@@ -1,9 +1,12 @@
 // Cloudflare Workers with static assets. There is no Worker script: Cloudflare
 // serves dist/ as-is, with the headers in public/_headers (copied to dist/).
 // The Worker name in the Cloudflare dashboard must match "name".
+// The custom domain is managed in the dashboard, so there are no routes here.
+// workers_dev is off: the site is served only from its custom domain.
 {
   "name": "todos",
   "compatibility_date": "2026-10-19",
+  "workers_dev": false,
   "assets": {
     "directory": "./dist/"
   }
